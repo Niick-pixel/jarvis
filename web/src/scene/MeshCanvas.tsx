@@ -1,42 +1,48 @@
-// The shader canvas itself, in its own module so it becomes its own chunk. Performance mode and
-// reduced motion never import it, which means those users never download three.js at all.
+// The fluid mesh gradient: six drifting colour centres blended with gaussian falloff.
+//
+// In its own module so it becomes its own chunk - Performance mode and reduced motion never
+// import it, and therefore never download three.js.
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useSession, type VisualState } from "../store/session";
 import { EnergySpring } from "./energy";
+import { blobFrames } from "./mesh";
 import { BACKGROUND_DPR, TARGET_FPS, useIdleAfter } from "./perf";
-import { PRESETS, type PresetName } from "./presets";
-import fragmentShader from "./shaders/warp.frag?raw";
-import vertexShader from "./shaders/warp.vert?raw";
+import { BLOB_COUNT, PRESETS, type PresetName } from "./presets";
+import fragmentShader from "./shaders/mesh.frag?raw";
+import vertexShader from "./shaders/mesh.vert?raw";
 
-interface PlaneProps {
+function MeshPlane({
+  preset,
+  visual,
+  tokenTick,
+}: {
   preset: PresetName;
   visual: VisualState;
   tokenTick: number;
-}
-
-function WarpPlane({ preset, visual, tokenTick }: PlaneProps) {
+}) {
   const spring = useRef(new EnergySpring());
   const pointer = useRef(new THREE.Vector2(0.5, 0.5));
   const lastTick = useRef(tokenTick);
+  const clock = useRef(0);
   const { size } = useThree();
 
   const uniforms = useMemo(() => {
-    const stops = PRESETS[preset].stops;
+    const config = PRESETS[preset];
     return {
       uTime: { value: 0 },
       uEnergy: { value: 0.12 },
       uPulse: { value: 0 },
       uError: { value: 0 },
-      uMaxLuma: { value: PRESETS[preset].maxLuma },
-      uResolution: { value: new THREE.Vector2(1, 1) },
+      uMaxLuma: { value: config.maxLuma },
+      uAspect: { value: 1 },
       uPointer: { value: new THREE.Vector2(0.5, 0.5) },
-      uC0: { value: new THREE.Vector3(...stops[0]!) },
-      uC1: { value: new THREE.Vector3(...stops[1]!) },
-      uC2: { value: new THREE.Vector3(...stops[2]!) },
-      uC3: { value: new THREE.Vector3(...stops[3]!) },
-      uC4: { value: new THREE.Vector3(...stops[4]!) },
+      uBase: { value: new THREE.Vector3(...config.base) },
+      uBaseWeight: { value: config.baseWeight },
+      uColors: { value: config.blobs.map((b) => new THREE.Vector3(...b.color)) },
+      uBlobs: { value: config.blobs.map((b) => new THREE.Vector3(b.at[0], b.at[1], b.falloff)) },
+      uWeights: { value: config.blobs.map((b) => b.weight) },
     };
   }, [preset]);
 
@@ -54,12 +60,24 @@ function WarpPlane({ preset, visual, tokenTick }: PlaneProps) {
       spring.current.tick();
     }
     spring.current.step(delta, visual);
-    uniforms.uTime.value += delta;
-    uniforms.uEnergy.value = spring.current.value;
-    uniforms.uPulse.value = spring.current.pulse;
-    uniforms.uError.value = spring.current.error;
-    uniforms.uResolution.value.set(size.width, size.height);
-    uniforms.uPointer.value.lerp(pointer.current, 0.08);
+    clock.current += delta;
+
+    const { value: energy, pulse, error } = spring.current;
+    const frames = blobFrames(PRESETS[preset], clock.current, energy, pulse);
+    const positions = uniforms.uBlobs.value;
+    const weights = uniforms.uWeights.value;
+    for (let i = 0; i < BLOB_COUNT; i++) {
+      const frame = frames[i]!;
+      positions[i]!.set(frame.x, frame.y, frame.falloff);
+      weights[i] = frame.weight;
+    }
+
+    uniforms.uTime.value = clock.current;
+    uniforms.uEnergy.value = energy;
+    uniforms.uPulse.value = pulse;
+    uniforms.uError.value = error;
+    uniforms.uAspect.value = size.width / Math.max(size.height, 1);
+    uniforms.uPointer.value.lerp(pointer.current, 0.06);
   });
 
   return (
@@ -98,7 +116,7 @@ function FrameDriver({ visual, paused }: { visual: VisualState; paused: boolean 
   return null;
 }
 
-export default function WarpCanvas({ preset }: { preset: PresetName }) {
+export default function MeshCanvas({ preset }: { preset: PresetName }) {
   const visual = useSession((s) => s.visual);
   const tokenTick = useSession((s) => s.tokenTick);
   const idle = useIdleAfter();
@@ -113,7 +131,7 @@ export default function WarpCanvas({ preset }: { preset: PresetName }) {
         camera={{ position: [0, 0, 1] }}
       >
         <FrameDriver visual={visual} paused={idle && visual === "idle"} />
-        <WarpPlane preset={preset} visual={visual} tokenTick={tokenTick} />
+        <MeshPlane preset={preset} visual={visual} tokenTick={tokenTick} />
       </Canvas>
     </div>
   );

@@ -5,7 +5,7 @@ import FallbackGradient from "./FallbackGradient";
 import { usePrefersReducedMotion } from "./perf";
 import type { PresetName } from "./presets";
 
-const WarpCanvas = lazy(() => import("./WarpCanvas"));
+const MeshCanvas = lazy(() => import("./MeshCanvas"));
 
 export default function Background({
   preset,
@@ -20,7 +20,7 @@ export default function Background({
 
   return (
     <Suspense fallback={<FallbackGradient preset={preset} />}>
-      <WarpCanvas preset={preset} />
+      <MeshCanvas preset={preset} />
     </Suspense>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "../store/session";
 import Button from "../ui/Button";
+import Sparkle from "../ui/Sparkle";
 
 export default function Composer() {
   const [draft, setDraft] = useState("");
@@ -29,6 +30,9 @@ export default function Composer() {
   return (
     <div className="mx-auto w-full max-w-4xl px-6 pb-6">
       <div className="glass flex items-end gap-2 rounded-2xl p-2">
+        <span className="flex h-10 w-8 items-center justify-center">
+          <Sparkle />
+        </span>
         <textarea
           ref={area}
           value={draft}

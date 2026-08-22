@@ -1,23 +1,25 @@
-// Performance mode, and the reduced-motion path: a CSS mesh gradient with no GPU cost worth
-// measuring. Same palette, no shader, no animation.
+// Performance mode, and the reduced-motion path: the same six colour centres rendered as CSS
+// radial gradients. Same palette and same resting layout as the shader, so switching modes
+// changes the cost, not the design.
+import { toCss } from "./mesh";
 import { PRESETS, type PresetName } from "./presets";
 
-const rgb = (stop: [number, number, number]) =>
-  `rgb(${stop.map((c) => Math.round(c * 255)).join(",")})`;
-
 export default function FallbackGradient({ preset }: { preset: PresetName }) {
-  const stops = PRESETS[preset].stops;
-  const layers = [
-    `radial-gradient(60% 55% at 18% 22%, ${rgb(stops[3]!)} 0%, transparent 62%)`,
-    `radial-gradient(55% 60% at 82% 28%, ${rgb(stops[4]!)} 0%, transparent 60%)`,
-    `radial-gradient(70% 65% at 50% 92%, ${rgb(stops[2]!)} 0%, transparent 66%)`,
-    `linear-gradient(160deg, ${rgb(stops[0]!)} 0%, ${rgb(stops[1]!)} 100%)`,
-  ].join(",");
+  const config = PRESETS[preset];
+  const layers = config.blobs
+    .map((blob) => {
+      const radius = Math.round(70 / Math.sqrt(blob.falloff));
+      const x = Math.round(blob.at[0] * 100);
+      const y = Math.round((1 - blob.at[1]) * 100);
+      return `radial-gradient(${radius * 1.4}% ${radius}% at ${x}% ${y}%, ${toCss(blob.color)} 0%, transparent 68%)`;
+    })
+    .join(",");
+
   return (
     <div
       aria-hidden
       className="pointer-events-none fixed inset-0 -z-10"
-      style={{ background: layers }}
+      style={{ background: `${layers}, ${toCss(config.base)}` }}
     />
   );
 }
