@@ -17,6 +17,8 @@ class Database:
 
     def __post_init__(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        # Probe once at construction so /api/health can answer honestly before the first request.
+        self.connect().close()
 
     def connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.path, isolation_level=None, check_same_thread=False)
