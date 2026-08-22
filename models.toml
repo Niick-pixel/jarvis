@@ -1,0 +1,91 @@
+# Requirement table for `make models`.
+#
+# This is deliberately NOT a list of pinned tags (see PLAN.md 1.2). Tags move fast and a stale
+# hardcoded one either 404s or downloads something surprising. Each entry states what the model
+# *is*; scripts/models_cli.py resolves the real file, its real size and its real hash against the
+# HuggingFace registry at run time, and any entry it cannot resolve is shown as unavailable.
+#
+# Sizes are not listed here on purpose. The ones printed by `make models` come from the registry,
+# and the tokens/sec printed next to them is measured on your card after download - never a
+# number copied from a table.
+
+schema_version = 1
+
+[[model]]
+key = "qwen3-8b"
+display_name = "Qwen3 8B"
+hf_repo = "Qwen/Qwen3-8B-GGUF"
+file_glob = "*Q4_K_M*.gguf"
+quant = "Q4_K_M"
+params_b = 8.0
+ctx_len_max = 32768
+tags = ["general", "default"]
+why = "Strongest all-rounder that still fits fully offloaded next to a browser on a 10GB card."
+
+[[model]]
+key = "qwen2.5-coder-7b"
+display_name = "Qwen2.5 Coder 7B"
+hf_repo = "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF"
+file_glob = "*q4_k_m*.gguf"
+quant = "Q4_K_M"
+params_b = 7.6
+ctx_len_max = 32768
+tags = ["code"]
+why = "Pick this over qwen3-8b if the workload is mostly code; noticeably better at diffs."
+
+[[model]]
+key = "llama3.1-8b"
+display_name = "Llama 3.1 8B Instruct"
+hf_repo = "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF"
+file_glob = "*Q4_K_M*.gguf"
+quant = "Q4_K_M"
+params_b = 8.0
+ctx_len_max = 32768
+tags = ["general"]
+why = "Fallback general model with the widest tooling compatibility."
+
+[[model]]
+key = "gemma2-9b"
+display_name = "Gemma 2 9B"
+hf_repo = "bartowski/gemma-2-9b-it-GGUF"
+file_glob = "*Q4_K_M*.gguf"
+quant = "Q4_K_M"
+params_b = 9.2
+ctx_len_max = 8192
+tags = ["general"]
+why = "Fits 12GB comfortably, but its 8K context ceiling is the real cost - shown in the ranking."
+
+[[model]]
+key = "mistral-nemo-12b"
+display_name = "Mistral Nemo 12B"
+hf_repo = "bartowski/Mistral-Nemo-Instruct-2407-GGUF"
+file_glob = "*Q4_K_M*.gguf"
+quant = "Q4_K_M"
+params_b = 12.2
+ctx_len_max = 131072
+tags = ["general", "tight"]
+why = "12GB-only, and only at reduced context. Ranked as fitting-but-tight with the numbers shown."
+
+[[model]]
+key = "nomic-embed-text"
+display_name = "Nomic Embed Text v1.5"
+hf_repo = "nomic-ai/nomic-embed-text-v1.5-GGUF"
+file_glob = "*f16*.gguf"
+quant = "F16"
+params_b = 0.137
+ctx_len_max = 8192
+tags = ["embedding"]
+why = "M4 embeddings. 137M params so it can share the card with an 8B model without evicting it."
+
+# Models the brief lists that this machine cannot run fully offloaded. Kept visible on purpose:
+# `make models` prints them with the arithmetic that rules them out rather than hiding them.
+[[model]]
+key = "gpt-oss-20b"
+display_name = "GPT-OSS 20B (MoE)"
+hf_repo = "ggml-org/gpt-oss-20b-GGUF"
+file_glob = "*mxfp4*.gguf"
+quant = "MXFP4"
+params_b = 20.9
+ctx_len_max = 131072
+tags = ["oversized"]
+why = "~13GB of weights. Needs CPU offload on this card; offered with a measured tok/s, not a guess."

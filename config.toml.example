@@ -1,0 +1,39 @@
+# Copy to config.toml. Every value here is also settable as JARVIS_<KEY> in the environment.
+
+[server]
+host = "127.0.0.1"          # A non-loopback bind requires auth_token, or the app refuses to start.
+port = 8080
+auth_token = ""             # Only needed if you change host away from loopback.
+
+[paths]
+data_dir = "./data"         # jarvis.db lives here
+models_dir = "./models"     # downloaded GGUF files
+
+[providers.llamacpp]
+enabled = true
+base_url = "http://127.0.0.1:8081"
+# Started for you by `make dev` when autostart = true and model_path is set.
+autostart = false
+model_path = ""
+ctx_len = 0                 # 0 = pick the largest context your VRAM budget allows
+
+[providers.ollama]
+enabled = true
+base_url = "http://127.0.0.1:11434"
+
+[providers.lmstudio]
+enabled = true
+base_url = "http://127.0.0.1:1234"
+
+[providers.openai]
+enabled = false
+base_url = "https://api.openai.com/v1"
+# Read from the JARVIS_OPENAI_API_KEY environment variable, never stored in this file.
+
+[visual]
+preset = "aurora"           # aurora | solar | deep
+performance_mode = "auto"   # auto | on | off - "auto" drops the shader when VRAM is tight
+
+[hardware]
+browser_vram_reserve_mb = 700   # Chromium GPU process + compositor share your card (see PLAN.md 1.1)
+kv_cache_dtype = "q8_0"         # q8_0 halves KV cost vs f16 at negligible quality cost
