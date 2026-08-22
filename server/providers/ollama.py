@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import httpx
 
-from server.models.provider import ModelInfo
+from server.models.provider import ModelInfo, ProviderKind
 from server.providers.openai_compat import OpenAICompatProvider
 
 
 class OllamaProvider(OpenAICompatProvider):
-    kind = "ollama"
+    kind: ProviderKind = "ollama"
 
     def __init__(self, base_url: str = "http://127.0.0.1:11434", timeout: float = 600.0) -> None:
         super().__init__(base_url, name="ollama", kind="ollama", timeout=timeout)

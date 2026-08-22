@@ -6,6 +6,7 @@ from fastapi import APIRouter
 
 from server.deps import State
 from server.errors import NotFound
+from server.hardware import catalog as catalog_mod
 from server.hardware import probe, recommend
 from server.models.hardware import HardwareReport, ModelRecommendation, VramBudget
 
@@ -39,8 +40,8 @@ async def budget(state: State, model_id: str, ctx_len: int) -> VramBudget:
 def catalog(state: State) -> list[ModelRecommendation]:
     """The same ranking `make models` prints, so the UI and the CLI cannot disagree."""
     gpus, _ = probe.probe_gpus()
-    return recommend.rank_catalog(
-        recommend.load_catalog(CATALOG_PATH),
+    return catalog_mod.rank_catalog(
+        catalog_mod.load_catalog(CATALOG_PATH),
         gpu=gpus[0] if gpus else None,
         browser_reserve_mb=state.settings.hardware.browser_vram_reserve_mb,
         kv_dtype=state.settings.hardware.kv_cache_dtype,

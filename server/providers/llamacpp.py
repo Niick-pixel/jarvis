@@ -13,7 +13,7 @@ from typing import Any
 import httpx
 
 from server.models.params import SamplingParams
-from server.models.provider import Capabilities, ModelInfo, ProviderInfo
+from server.models.provider import Capabilities, ModelInfo, ProviderInfo, ProviderKind
 from server.models.stream import Alternative
 from server.providers.base import (
     PromptMessage,
@@ -29,7 +29,7 @@ FALLBACK_TEMPLATE_NOTE = "chat template applied locally (backend has no /apply-t
 
 
 class LlamaCppProvider:
-    kind = "llamacpp"
+    kind: ProviderKind = "llamacpp"
 
     def __init__(self, base_url: str, name: str = "llama.cpp", timeout: float = 600.0) -> None:
         self.name = name

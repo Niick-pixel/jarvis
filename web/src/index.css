@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #05060a;
+  color: theme("colors.ink.DEFAULT");
+  font-family: theme("fontFamily.sans");
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* The shader and the glow are decoration that signals state. When the user has asked for less
+   motion, both go still - section 5.5 calls this non-negotiable, so it is not a setting. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.glass {
+  background: theme("colors.panel");
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid theme("colors.edge");
+}
+
+/* Chrome text sits on a flat scrim rather than straight on the shader. scripts/contrast_check.py
+   models this exact surface, so its opacity is a contract, not a taste decision. */
+.scrim {
+  background: rgba(5, 6, 10, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 10px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}

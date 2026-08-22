@@ -85,9 +85,9 @@ class ProviderRegistry:
             *(p.list_models() for p in online), return_exceptions=True
         )
         models: list[ModelInfo] = []
-        for result in model_lists:
-            if not isinstance(result, BaseException):
-                models.extend(result)
+        for listed in model_lists:
+            if not isinstance(listed, BaseException):
+                models.extend(listed)
         self._infos, self._models, self._fetched_at = infos, models, time.monotonic()
 
     async def _ensure_fresh(self) -> None:

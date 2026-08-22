@@ -703,6 +703,37 @@ injection boundary in `tools/gate.py`, hash-and-path-only audit log, Obsidian ex
 
 ---
 
+## 7a. M1 as built: where it diverged from this plan
+
+The plan survived contact, with five changes worth recording.
+
+1. **`chat/run.py` split into `run.py` + `execute.py`, and `cancel.py` became `live.py`.** Generation
+   runs as a background task publishing to a subscriber registry rather than inside the HTTP
+   handler, so closing the browser does not kill an answer and a reconnect can reattach. Cancellation
+   and fan-out need the same registry, so they live in one module instead of sharing state across two.
+2. **`providers/httpsse.py` added.** llama.cpp and every OpenAI-compatible backend both parse `data:`
+   frames; one parser beats the same ten lines in two adapters.
+3. **The context assembler landed in M1, not M2.** The streaming contract says the assembly event
+   comes first, always. Shipping M1 without it would have meant a placeholder, which rule 0.3
+   forbids. M2 still owns the interactive part: pinning, toggling, reordering and the stacked bar.
+   Migration `002_run_assembly.sql` stores the assembly on the run so a reconnect can replay it;
+   M2's per-block table becomes migration 003.
+4. **`hardware/recommend.py` split into `recommend.py` + `catalog.py`** when `make check` caught it
+   at 286 lines, over the 250 limit.
+5. **The SSE union is declared in the OpenAPI schema** via a `StreamEnvelope` root model. Without it
+   the event shapes never reach the generated TypeScript, and the frontend would have to hand-write
+   the one part of the API rule 0.5 most cares about.
+
+**One known gap.** The frontend's SSE frame parser is part of the streaming path that rule 0.7 says
+to test, but there is no frontend test runner — deliberately, since all three test subjects were
+meant to be backend logic. A CRLF bug in that parser got through to a browser and was caught by
+hand: every live event silently failed to parse while the app still looked correct, because the
+transcript refreshes from the database when a stream closes. `test_stream_interrupt.py` now pins the
+wire format from the backend side, but that would not have caught this. Adding Vitest for that one
+pure function needs your approval under rule 0.4 — I recommend it.
+
+---
+
 ## 8. Tests, checks, and the Makefile
 
 ### 8.1 Exactly three test subjects (rule 0.7)

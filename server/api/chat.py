@@ -10,13 +10,26 @@ from server.chat import execute as executor
 from server.chat import run as runner
 from server.chat import sse
 from server.deps import State
-from server.errors import NotFound
-from server.models.stream import ChatRequest
+from server.errors import ErrorBody, NotFound
+from server.models.stream import ChatRequest, StreamEnvelope
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
-@router.post("/stream")
+SSE_RESPONSES: dict[int | str, dict[str, object]] = {
+    200: {
+        "model": StreamEnvelope,
+        "description": "An SSE stream. Each frame's `data` is one StreamEnvelope.",
+        "content": {"text/event-stream": {}},
+    },
+    400: {"model": ErrorBody},
+    404: {"model": ErrorBody},
+    503: {"model": ErrorBody},
+    507: {"model": ErrorBody, "description": "Not enough VRAM; the body carries the remedy."},
+}
+
+
+@router.post("/stream", responses=SSE_RESPONSES)
 async def stream_chat(body: ChatRequest, state: State) -> EventSourceResponse:
     """Start a generation. The run outlives this response: closing the browser does not kill it."""
     prepared = await runner.prepare(state.db, state.registry, state.settings, body)
@@ -27,7 +40,7 @@ async def stream_chat(body: ChatRequest, state: State) -> EventSourceResponse:
     return EventSourceResponse(sse.stream_new_run(prepared, queue))
 
 
-@router.get("/runs/{run_id}/events")
+@router.get("/runs/{run_id}/events", responses=SSE_RESPONSES)
 async def resume_run(
     run_id: str,
     state: State,

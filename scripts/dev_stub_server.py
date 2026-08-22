@@ -1,0 +1,149 @@
+"""A llama.cpp-protocol stand-in, for verifying the plumbing without downloading a model.
+
+This is a development harness, not part of the app: it speaks the same endpoints llama.cpp does
+(/props, /tokenize, /apply-template, /completion with n_probs and SSE) and emits deterministic
+text. Use it to confirm that streaming, cancellation, resume and the context accounting all work
+end to end before you spend 5 GB on weights - and to reproduce a UI bug without a GPU.
+
+    python scripts/dev_stub_server.py --port 8081
+
+It never pretends to be a model in the app: it reports itself through the ordinary provider
+interface, and anything it returns is obviously synthetic.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import math
+import random
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, StreamingResponse
+
+WORDS = [
+    "the",
+    "local",
+    "model",
+    "runs",
+    "on",
+    "your",
+    "own",
+    "hardware",
+    "which",
+    "means",
+    "every",
+    "token",
+    "you",
+    "generate",
+    "is",
+    "yours",
+    "and",
+    "nothing",
+    "leaves",
+    "this",
+    "machine",
+    "you",
+    "can",
+    "edit",
+    "what",
+    "i",
+    "just",
+    "said",
+    "fork",
+    "the",
+    "conversation",
+    "and",
+    "continue",
+    "from",
+    "your",
+    "own",
+    "version",
+]
+
+app = FastAPI(title="llama.cpp stand-in (development only)")
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.get("/props")
+async def props() -> dict[str, object]:
+    return {
+        "model_path": "/dev/stub/synthetic-8b-Q4_K_M.gguf",
+        "default_generation_settings": {"n_ctx": 8192},
+    }
+
+
+@app.post("/tokenize")
+async def tokenize(request: Request) -> dict[str, list[int]]:
+    content = (await request.json()).get("content", "")
+    # One token per whitespace word: exact and reproducible, which is all the assembler needs.
+    return {"tokens": list(range(len(content.split())))}
+
+
+@app.post("/apply-template")
+async def apply_template(request: Request) -> dict[str, str]:
+    messages = (await request.json()).get("messages", [])
+    rendered = "".join(f"<|{m['role']}|>\n{m['content']}\n" for m in messages)
+    return {"prompt": rendered + "<|assistant|>\n"}
+
+
+@app.post("/completion", response_model=None)
+async def completion(request: Request) -> StreamingResponse | JSONResponse:
+    body = await request.json()
+    if not body.get("stream"):
+        return JSONResponse({"error": "this stand-in only implements the streaming path"}, 400)
+
+    n_predict = int(body.get("n_predict") or 64)
+    n_probs = int(body.get("n_probs") or 0)
+    rng = random.Random(int(body.get("seed") or 0))
+    delay = float(body.get("_delay_s") or 0.05)
+
+    async def stream() -> asyncio.AsyncIterator[bytes]:
+        count = min(n_predict, len(WORDS))
+        for index in range(count):
+            await asyncio.sleep(delay)
+            chunk: dict[str, object] = {"content": WORDS[index] + " ", "stop": False}
+            if n_probs:
+                confidence = 0.55 + 0.4 * abs(math.sin(index * 1.7))
+                chunk["completion_probabilities"] = [
+                    {
+                        "content": WORDS[index],
+                        "probs": [
+                            {"tok_str": WORDS[index], "prob": confidence},
+                            *[
+                                {"tok_str": rng.choice(WORDS), "prob": (1 - confidence) / 4}
+                                for _ in range(min(n_probs - 1, 4))
+                            ],
+                        ],
+                    }
+                ]
+            yield f"data: {json.dumps(chunk)}\n\n".encode()
+        final = {
+            "content": "",
+            "stop": True,
+            "stop_type": "eos",
+            "timings": {
+                "prompt_n": 24,
+                "prompt_ms": 120,
+                "predicted_n": count,
+                "predicted_ms": int(count * delay * 1000),
+            },
+        }
+        yield f"data: {json.dumps(final)}\n\n".encode()
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--port", type=int, default=8081)
+    args = parser.parse_args()
+    print("Development stand-in only - this is not a model. Bound to 127.0.0.1.")
+    uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")

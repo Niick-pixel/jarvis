@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from typing import Any
 
 import pytest
-from tests.conftest import FakeProvider
 
 from server.chat import sse
 from server.chat.execute import execute
@@ -24,6 +24,7 @@ from server.models.conversation import ConversationCreate
 from server.models.stream import ChatRequest
 from server.providers.registry import ProviderRegistry
 from server.settings import Settings
+from tests.conftest import FakeProvider
 
 SCRIPT = [f"t{i} " for i in range(10)]
 
@@ -197,6 +198,46 @@ async def test_error_is_published_to_attached_clients(db: Database, settings: Se
     payloads = [p async for p in sse._drain(queue, prepared.run_id)]
     await asyncio.wait_for(task, timeout=5)
     assert [p["event"] for p in payloads][-2:] == ["error", "done"]
+
+
+def test_wire_format_is_parseable_by_the_documented_frame_rules(
+    db: Database, settings: Settings
+) -> None:
+    """Pins the SSE framing the frontend parser depends on.
+
+    A parser that splits on the wrong newline reads zero events while the app still looks fine -
+    the transcript refreshes from the database when the stream closes, so nothing visibly breaks
+    and every live feature is silently dead. That happened once; this stops it recurring.
+    """
+    from fastapi.testclient import TestClient
+
+    from server.main import create_app
+
+    app = create_app(settings)
+    app.state.app.registry = ProviderRegistry([FakeProvider(SCRIPT)])
+    with TestClient(app) as client:
+        conversation = client.post("/api/conversations", json={"title": "wire"}).json()
+        with client.stream(
+            "POST",
+            "/api/chat/stream",
+            json={"conversation_id": conversation["id"], "content": "hi"},
+        ) as response:
+            raw = b"".join(response.iter_bytes()).decode()
+
+    frames = [f for f in re.split(r"\r?\n\r?\n", raw) if f.strip()]
+    assert len(frames) >= len(SCRIPT) + 3, "assembly, run, every token, usage and done"
+
+    kinds = []
+    for frame in frames:
+        fields = dict(
+            line.split(":", 1) for line in re.split(r"\r?\n", frame.strip()) if ":" in line
+        )
+        assert "event" in fields and "data" in fields, f"malformed frame: {frame!r}"
+        json.loads(fields["data"].strip())
+        kinds.append(fields["event"].strip())
+        if kinds[-1] == "token":
+            assert "id" in fields, "token frames must carry an id, or resume cannot work"
+    assert kinds[0] == "assembly" and kinds[1] == "run" and kinds[-1] == "done"
 
 
 @pytest.mark.parametrize(

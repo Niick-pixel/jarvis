@@ -7,12 +7,11 @@ beginning without anyone being told. These tests pin the total to the real promp
 
 from __future__ import annotations
 
-from tests.conftest import MODEL_ID, FakeProvider
-
 from server.context.assembler import RESERVED_TEMPLATE_TOKENS, assemble, to_prompt_messages
 from server.ids import now_ms
 from server.models.conversation import Conversation
 from server.models.message import Message, Role
+from tests.conftest import MODEL_ID, FakeProvider
 
 
 def conversation(system_prompt: str = "") -> Conversation:
@@ -146,7 +145,9 @@ async def test_prompt_contains_exactly_the_included_blocks() -> None:
     included = [b for b in assembly.blocks if b.included]
     assert len(prompt) == len(included)
     assert [p.content for p in prompt] == [b.content for b in included]
-    assert all(b.content not in [p.content for p in prompt] for b in assembly.blocks if not b.included)
+    assert all(
+        b.content not in [p.content for p in prompt] for b in assembly.blocks if not b.included
+    )
 
 
 async def test_roles_survive_the_round_trip() -> None:
