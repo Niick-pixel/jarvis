@@ -1,3 +1,3 @@
-from server.db.repo import conversations, messages, runs, settings
+from server.db.repo import blocks, conversations, messages, runs, settings
 
-__all__ = ["conversations", "messages", "runs", "settings"]
+__all__ = ["blocks", "conversations", "messages", "runs", "settings"]

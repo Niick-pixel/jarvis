@@ -8,6 +8,7 @@ beginning without anyone being told. These tests pin the total to the real promp
 from __future__ import annotations
 
 from server.context.assembler import RESERVED_TEMPLATE_TOKENS, assemble, to_prompt_messages
+from server.db.repo.blocks import BlockPref
 from server.ids import now_ms
 from server.models.conversation import Conversation
 from server.models.message import Message, Role
@@ -162,3 +163,63 @@ async def test_roles_survive_the_round_trip() -> None:
     )
     prompt = to_prompt_messages(assembly, messages)
     assert [p.role for p in prompt] == ["system", "user", "assistant", "user"]
+
+
+# --- block preferences: pinning, disabling and reordering (BRIEF.md 4.2) ---
+
+
+async def test_disabling_a_block_removes_it_and_says_so() -> None:
+    messages = path(("user", "keep this"), ("assistant", "drop this"), ("user", "and this"))
+    assembly = await assemble(
+        conversation=conversation(),
+        path=messages,
+        provider=FakeProvider(),
+        model_id=MODEL_ID,
+        ctx_len=4096,
+        max_gen_tokens=64,
+        prefs={"m1": BlockPref(source_ref="m1", disabled=True)},
+    )
+    dropped = [b for b in assembly.blocks if not b.included]
+    assert [b.source_ref for b in dropped] == ["m1"]
+    assert [n.reason for n in assembly.evictions] == ["user_disabled"]
+    assert "drop this" not in [p.content for p in to_prompt_messages(assembly, messages)]
+
+
+async def test_a_pinned_block_survives_a_budget_that_would_evict_it() -> None:
+    turns = tuple(("user", f"word{i} filler filler filler") for i in range(30))
+    messages = path(*turns)  # type: ignore[arg-type]
+    assembly = await assemble(
+        conversation=conversation(),
+        path=messages,
+        provider=FakeProvider(),
+        model_id=MODEL_ID,
+        ctx_len=100,
+        max_gen_tokens=20,
+        prefs={"m0": BlockPref(source_ref="m0", pinned=True)},
+    )
+    first = next(b for b in assembly.blocks if b.source_ref == "m0")
+    assert first.included, "the oldest turn is normally evicted first; pinning must protect it"
+    assert assembly.total_tokens <= assembly.ctx_len - assembly.max_gen_tokens
+
+
+async def test_reordering_changes_the_prompt_order_not_the_total() -> None:
+    messages = path(("user", "one"), ("assistant", "two"), ("user", "three"))
+    plain = await assemble(
+        conversation=conversation(),
+        path=messages,
+        provider=FakeProvider(),
+        model_id=MODEL_ID,
+        ctx_len=4096,
+        max_gen_tokens=64,
+    )
+    moved = await assemble(
+        conversation=conversation(),
+        path=messages,
+        provider=FakeProvider(),
+        model_id=MODEL_ID,
+        ctx_len=4096,
+        max_gen_tokens=64,
+        prefs={"m2": BlockPref(source_ref="m2", ord=-1)},
+    )
+    assert moved.total_tokens == plain.total_tokens
+    assert [b.source_ref for b in moved.blocks][0] == "m2"

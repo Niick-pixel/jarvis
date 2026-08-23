@@ -27,7 +27,8 @@ async def execute(db: Database, live: LiveRuns, prepared: PreparedRun) -> None:
     if run is None:
         return
     index = 0
-    byte_offset = 0
+    # Offsets are into the message's content, which already holds the prefix when continuing.
+    byte_offset = len((prepared.assistant_prefix or "").encode())
     usage = Usage()
     stop_reason: StopReason = "eos"
     error: ErrorEvent | None = None
@@ -39,6 +40,7 @@ async def execute(db: Database, live: LiveRuns, prepared: PreparedRun) -> None:
                 prepared.params,
                 model_id=prepared.model.id,
                 ctx_len=prepared.ctx_len,
+                assistant_prefix=prepared.assistant_prefix,
             )
             async for item in _with_cancellation(stream, run):
                 if isinstance(item, Usage):

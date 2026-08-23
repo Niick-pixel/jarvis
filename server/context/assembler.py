@@ -8,6 +8,7 @@ quietly - every eviction produces a notice the UI shows loudly (BRIEF.md 4.2).
 from __future__ import annotations
 
 from server.context.tokenizer import TokenCounter
+from server.db.repo.blocks import BlockPref
 from server.ids import new_id
 from server.models.context import ContextAssembly, ContextBlock, EvictionNotice
 from server.models.conversation import Conversation
@@ -26,8 +27,10 @@ async def assemble(
     model_id: str,
     ctx_len: int,
     max_gen_tokens: int,
+    prefs: dict[str, BlockPref] | None = None,
 ) -> ContextAssembly:
     counter = TokenCounter(provider, model_id)
+    prefs = prefs or {}
     blocks: list[ContextBlock] = []
 
     if conversation.system_prompt.strip():
@@ -59,7 +62,8 @@ async def assemble(
             )
         )
 
-    evictions = apply_budget(blocks, ctx_len=ctx_len, max_gen_tokens=max_gen_tokens)
+    evictions = apply_prefs(blocks, prefs)
+    evictions += apply_budget(blocks, ctx_len=ctx_len, max_gen_tokens=max_gen_tokens)
     return ContextAssembly(
         model_id=model_id,
         ctx_len=ctx_len,
@@ -69,6 +73,36 @@ async def assemble(
         estimated=not counter.exact,
         evictions=evictions,
     )
+
+
+def apply_prefs(blocks: list[ContextBlock], prefs: dict[str, BlockPref]) -> list[EvictionNotice]:
+    """Pin, disable and reorder before the budget is applied.
+
+    A block you switched off is still reported as a notice: the request is different because of a
+    choice you made, and the transcript should say so rather than quietly shrinking.
+    """
+    notices: list[EvictionNotice] = []
+    for block in blocks:
+        pref = prefs.get(block.source_ref or "")
+        if pref is None:
+            continue
+        block.pinned = block.pinned or pref.pinned
+        if pref.disabled:
+            block.included = False
+            block.eviction = "user_disabled"
+            notices.append(
+                EvictionNotice(
+                    block_id=block.id,
+                    label=block.label,
+                    kind=block.kind,
+                    token_count=block.token_count,
+                    reason="user_disabled",
+                )
+            )
+        if pref.ord is not None:
+            block.ord = pref.ord
+    blocks.sort(key=lambda b: b.ord)
+    return notices
 
 
 def apply_budget(

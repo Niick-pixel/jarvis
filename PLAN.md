@@ -674,6 +674,13 @@ token half of `test_stream_interrupt.py`.
   greyed-out-and-lying. The HUD shows `—` for power/temp if WSL's NVML doesn't expose them (§1.3).
 
 ### M4 — Knowledge
+
+**Memory capture mode is still undecided.** §4.7 describes memory as browsable, editable files; it
+does not say whether facts are captured automatically. Three options, to settle before M4 starts:
+auto-extract with a visible "saved 2 things" marker and one-click undo (recommended); auto-extract
+into a review queue that writes nothing unseen; or explicit "remember this" only. Memory is
+model-agnostic either way — it enters through the ContextAssembler, so every provider gets it.
+
 Migration 004, watcher (with the `/mnt/c` polling path), chunking with byte offsets, embeddings via
 the provider layer, hybrid FTS5 + `sqlite-vec` retrieval with RRF, CPU reranking, memory as
 git-backed Markdown with per-entry retrieval stats, retrieval attribution in every answer, native

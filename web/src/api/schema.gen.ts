@@ -65,6 +65,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/context/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Prefs
+         * @description Pin, disable or reorder blocks. Preferences outlive the request that set them.
+         */
+        patch: operations["update_prefs_api_context_blocks_patch"];
+        trace?: never;
+    };
+    "/api/context/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview
+         * @description Assemble without generating, so the bar under the composer is live before you send.
+         */
+        post: operations["preview_api_context_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conversations": {
         parameters: {
             query?: never;
@@ -193,6 +233,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/messages/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge Messages
+         * @description Compose a new leaf from spans of sibling branches.
+         */
+        post: operations["merge_messages_api_messages_merge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/messages/{message_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Message */
+        get: operations["get_message_api_messages__message_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit Message
+         * @description Edit any message - including one the assistant wrote - by forking a sibling.
+         *
+         *     The original is untouched and still reachable through the sibling switcher. This is the whole
+         *     point of the project: steering by rewriting what the model said, then continuing from your
+         *     version, which no hosted product will let you do.
+         */
+        patch: operations["edit_message_api_messages__message_id__patch"];
+        trace?: never;
+    };
+    "/api/messages/{message_id}/siblings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Siblings
+         * @description Powers the inline `< 2/4 >` switcher.
+         */
+        get: operations["siblings_api_messages__message_id__siblings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/models": {
         parameters: {
             query?: never;
@@ -288,6 +393,23 @@ export interface components {
              */
             type: "assembly";
         };
+        /** BlockPref */
+        BlockPref: {
+            /**
+             * Disabled
+             * @default false
+             */
+            disabled: boolean;
+            /** Ord */
+            ord?: number | null;
+            /**
+             * Pinned
+             * @default false
+             */
+            pinned: boolean;
+            /** Source Ref */
+            source_ref: string;
+        };
         /** Capabilities */
         Capabilities: {
             /**
@@ -315,6 +437,8 @@ export interface components {
         ChatRequest: {
             /** Content */
             content?: string | null;
+            /** Continue From */
+            continue_from?: string | null;
             /** Conversation Id */
             conversation_id: string;
             /** Ctx Len */
@@ -587,6 +711,25 @@ export interface components {
             /** Ram Total Mb */
             ram_total_mb: number;
         };
+        /** MergeRequest */
+        MergeRequest: {
+            /**
+             * Separator
+             * @default
+             */
+            separator: string;
+            /** Spans */
+            spans: components["schemas"]["MergeSpan"][];
+        };
+        /** MergeSpan */
+        MergeSpan: {
+            /** End */
+            end: number;
+            /** Source Id */
+            source_id: string;
+            /** Start */
+            start: number;
+        };
         /** Message */
         Message: {
             /** Content */
@@ -635,6 +778,14 @@ export interface components {
              * @enum {string}
              */
             role: "system" | "user" | "assistant" | "tool";
+        };
+        /**
+         * MessageEdit
+         * @description Editing any message - including the assistant's own - forks a sibling.
+         */
+        MessageEdit: {
+            /** Content */
+            content: string;
         };
         /** ModelInfo */
         ModelInfo: {
@@ -758,6 +909,29 @@ export interface components {
              */
             type: "nudge";
         };
+        /** PrefsUpdate */
+        PrefsUpdate: {
+            /** Conversation Id */
+            conversation_id: string;
+            /** Prefs */
+            prefs: components["schemas"]["BlockPref"][];
+        };
+        /** PreviewRequest */
+        PreviewRequest: {
+            /** Conversation Id */
+            conversation_id: string;
+            /** Ctx Len */
+            ctx_len?: number | null;
+            /**
+             * Max Gen Tokens
+             * @default 2048
+             */
+            max_gen_tokens: number;
+            /** Model Id */
+            model_id?: string | null;
+            /** Parent Id */
+            parent_id?: string | null;
+        };
         /** ProviderInfo */
         ProviderInfo: {
             /** Base Url */
@@ -864,6 +1038,16 @@ export interface components {
         SelectedModel: {
             /** Model Id */
             model_id?: string | null;
+        };
+        /**
+         * SiblingSet
+         * @description Powers the inline `< 2/4 >` switcher.
+         */
+        SiblingSet: {
+            /** Ids */
+            ids: string[];
+            /** Index */
+            index: number;
         };
         /**
          * StreamEnvelope
@@ -1144,6 +1328,72 @@ export interface operations {
             };
         };
     };
+    update_prefs_api_context_blocks_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrefsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockPref"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_context_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContextAssembly"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_conversations_api_conversations_get: {
         parameters: {
             query?: never;
@@ -1419,6 +1669,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Health"];
+                };
+            };
+        };
+    };
+    merge_messages_api_messages_merge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_message_api_messages__message_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_message_api_messages__message_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MessageEdit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Message"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    siblings_api_messages__message_id__siblings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiblingSet"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

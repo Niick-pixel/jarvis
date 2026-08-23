@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from server.graph import dag
+from server.errors import SovereignError
+from server.graph import dag, merge
 from server.models.message import Message
 
 
@@ -98,3 +99,66 @@ def test_a_cycle_raises_instead_of_hanging() -> None:
     corrupt = [node("x", "y", 1), node("y", "x", 2)]
     with pytest.raises(dag.CycleError):
         dag.ancestors(corrupt, "x")
+
+
+# --- merge: composing a new leaf from spans of sibling branches (BRIEF.md 4.1) ---
+
+
+def sibling(mid: str, content: str, parent: str | None = "a", created_at: int = 9) -> Message:
+    return Message(
+        id=mid,
+        conversation_id="c1",
+        parent_id=parent,
+        role="assistant",
+        content=content,
+        created_at=created_at,
+    )
+
+
+def test_merge_composes_from_the_sources_not_from_client_text() -> None:
+    """The server slices the sources itself, so recorded provenance is true by construction."""
+    left = sibling("L", "the quick brown fox")
+    right = sibling("R", "jumps over the lazy dog")
+    request = merge.MergeRequest(
+        spans=[
+            merge.MergeSpan(source_id="L", start=0, end=9),
+            merge.MergeSpan(source_id="R", start=0, end=10),
+        ],
+        separator=" ",
+    )
+    result = merge.compose(request, {"L": left, "R": right})
+    assert result.content == "the quick jumps over"
+    assert result.parent_id == "a"
+    assert result.role == "assistant"
+    assert [s.source_id for s in result.provenance] == ["L", "R"]
+
+
+def test_merge_refuses_spans_outside_the_source() -> None:
+    left = sibling("L", "short")
+    request = merge.MergeRequest(spans=[merge.MergeSpan(source_id="L", start=0, end=99)])
+    with pytest.raises(SovereignError, match="does not fit"):
+        merge.compose(request, {"L": left})
+
+
+def test_merge_refuses_branches_that_are_not_siblings() -> None:
+    """Merging across depths would produce a node whose parent is ambiguous."""
+    left = sibling("L", "one", parent="a")
+    right = sibling("R", "two", parent="b")
+    request = merge.MergeRequest(
+        spans=[
+            merge.MergeSpan(source_id="L", start=0, end=3),
+            merge.MergeSpan(source_id="R", start=0, end=3),
+        ]
+    )
+    with pytest.raises(SovereignError, match="sibling"):
+        merge.compose(request, {"L": left, "R": right})
+
+
+def test_merge_leaves_its_sources_untouched() -> None:
+    left = sibling("L", "keep me exactly")
+    right = sibling("R", "and me")
+    merge.compose(
+        merge.MergeRequest(spans=[merge.MergeSpan(source_id="L", start=0, end=4)]),
+        {"L": left, "R": right},
+    )
+    assert left.content == "keep me exactly" and right.content == "and me"

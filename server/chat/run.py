@@ -36,6 +36,8 @@ class PreparedRun:
     provider: ModelProvider
     model: ModelInfo
     ctx_len: int
+    assistant_prefix: str | None = None
+    """Set when continuing an edited assistant turn: generation resumes from this text."""
 
 
 async def resolve_model_id(
@@ -101,7 +103,17 @@ async def prepare(
         params = request.params.resolved()
         _preflight_vram(model, ctx_len, settings, provider)
 
-        path = dag.ancestors(messages, parent_id)
+        # Continuing an edited assistant turn: its text becomes the prefix, and the continuation
+        # lands in a new sibling. The edited node stays exactly as you left it.
+        prefix: str | None = None
+        if request.continue_from:
+            source = repo.messages.get(conn, request.continue_from)
+            if source is None:
+                raise NotFound("Message to continue")
+            prefix = source.content
+            parent_id = source.parent_id
+
+        path = dag.ancestors(messages, parent_id) if parent_id else []
         assembly = await assemble(
             conversation=conversation,
             path=path,
@@ -109,6 +121,7 @@ async def prepare(
             model_id=model.id,
             ctx_len=ctx_len,
             max_gen_tokens=params.max_tokens,
+            prefs=repo.blocks.for_conversation(conn, conversation.id),
         )
         prompt = to_prompt_messages(assembly, path)
 
@@ -116,11 +129,13 @@ async def prepare(
             conn,
             conversation_id=conversation.id,
             role="assistant",
-            content="",
+            content=prefix or "",
             parent_id=parent_id,
             model_id=model.id,
             params=params,
             status="streaming",
+            edited_from_id=request.continue_from,
+            forked_reason="edit" if request.continue_from else None,
         )
         run_id = repo.runs.create(
             conn,
@@ -146,6 +161,7 @@ async def prepare(
         provider=provider,
         model=model,
         ctx_len=ctx_len,
+        assistant_prefix=prefix,
     )
 
 
@@ -197,3 +213,38 @@ def stored_assembly(db: Database, run_id: str) -> ContextAssembly | None:
     if row is None or not row["assembly_json"]:
         return None
     return ContextAssembly(**json.loads(row["assembly_json"]))
+
+
+async def assemble_preview(
+    db: Database,
+    registry: ProviderRegistry,
+    settings: Settings,
+    *,
+    conversation_id: str,
+    parent_id: str | None,
+    model_id: str | None,
+    ctx_len: int | None,
+    max_gen_tokens: int,
+) -> ContextAssembly:
+    """What would go into the next request, without making one."""
+    from server.graph import dag
+
+    resolved = await resolve_model_id(db, registry, settings, model_id)
+    provider, model = await registry.resolve(resolved)
+    with db.session() as conn:
+        conversation = repo.conversations.get(conn, conversation_id)
+        if conversation is None:
+            raise NotFound("Conversation")
+        messages = repo.messages.list_for_conversation(conn, conversation_id)
+        leaf = parent_id or conversation.active_leaf_id
+        path = dag.ancestors(messages, leaf) if leaf else []
+        request = ChatRequest(conversation_id=conversation_id, ctx_len=ctx_len)
+        return await assemble(
+            conversation=conversation,
+            path=path,
+            provider=provider,
+            model_id=model.id,
+            ctx_len=_resolve_ctx_len(request, model, settings),
+            max_gen_tokens=max_gen_tokens,
+            prefs=repo.blocks.for_conversation(conn, conversation_id),
+        )

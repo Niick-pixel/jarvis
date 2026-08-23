@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from server.api import chat, conversations, hardware, models_api
+from server.api import chat, context, conversations, hardware, messages, models_api
 from server.chat.live import LiveRuns
 from server.db.connection import Database
 from server.db.migrate import migrate
@@ -64,7 +64,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             bind=f"{state.settings.server.host}:{state.settings.server.port}",
         )
 
-    for router in (conversations.router, chat.router, models_api.router, hardware.router):
+    for router in (
+        conversations.router,
+        chat.router,
+        models_api.router,
+        hardware.router,
+        messages.router,
+        context.router,
+    ):
         app.include_router(router)
 
     if WEB_DIST.is_dir():
