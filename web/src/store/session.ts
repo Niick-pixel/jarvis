@@ -23,6 +23,7 @@ interface SessionState {
 
   bootstrap: () => Promise<void>;
   refreshTree: () => Promise<void>;
+  openConversation: (id: string) => Promise<void>;
   lastPrompt: string | null;
   send: (content: string, ctxLen?: number | null) => Promise<void>;
   applyRemedy: (remedy: Remedy) => Promise<void>;
@@ -52,6 +53,20 @@ export const useSession = create<SessionState>((set, get) => ({
       conversation: tree.conversation,
       messages: tree.messages,
       activePath: tree.active_path,
+    });
+  },
+
+  openConversation: async (id: string) => {
+    const tree = await api.tree(id);
+    set({
+      conversation: tree.conversation,
+      messages: tree.messages,
+      activePath: tree.active_path,
+      assembly: null,
+      streamingText: "",
+      streamingId: null,
+      error: null,
+      visual: "idle",
     });
   },
 

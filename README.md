@@ -52,6 +52,14 @@ make dev
   cache.
 - **VRAM preflight.** If a request will not fit you get a sentence and a button that fixes it, not
   an OOM stack trace.
+- **Automatic model selection.** The app ranks every model it can reach against your actual card
+  and runs the largest local one that genuinely fits. The picker shows the same ranking with the
+  arithmetic behind each verdict — weights, KV cache, browser reserve, headroom — so "too big" is
+  a number, not an opinion. Pin one if you prefer; if a pinned model stops being reachable the app
+  falls back to the automatic choice rather than failing the request. A remote OpenAI-compatible
+  endpoint is listed, labelled as leaving the machine, and never selected automatically.
+- **Every conversation saved locally**, browsable and switchable from the sidebar. Rows in SQLite,
+  not browser storage: they survive reboots, and deleting one is a hard delete.
 
 ## Development
 

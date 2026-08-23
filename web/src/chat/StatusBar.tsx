@@ -4,12 +4,14 @@ import type { ProviderInfo } from "../api/types";
 import { PRESETS, type PresetName } from "../scene/presets";
 import { useSession } from "../store/session";
 import Button from "../ui/Button";
+import ModelPicker from "./ModelPicker";
 
 interface Props {
   preset: PresetName;
   onPreset: (preset: PresetName) => void;
   performanceMode: boolean;
   onPerformanceMode: (value: boolean) => void;
+  onToggleSidebar: () => void;
 }
 
 export default function StatusBar({
@@ -17,6 +19,7 @@ export default function StatusBar({
   onPreset,
   performanceMode,
   onPerformanceMode,
+  onToggleSidebar,
 }: Props) {
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const tps = useSession((s) => s.tps);
@@ -32,7 +35,10 @@ export default function StatusBar({
   const names = Object.keys(PRESETS) as PresetName[];
 
   return (
-    <header className="mx-auto flex w-full max-w-4xl items-center gap-3 px-6 pt-5 text-xs text-ink-muted">
+    <header className="flex w-full flex-wrap items-center gap-2 px-4 py-3 text-xs text-ink-muted">
+      <Button onClick={onToggleSidebar} title="Saved conversations">
+        ☰
+      </Button>
       <span className="font-medium text-ink">Jarvis</span>
       <span
         className={`rounded-full px-2 py-0.5 ${
@@ -40,10 +46,13 @@ export default function StatusBar({
         }`}
         title={providers.map((p) => `${p.name}: ${p.online ? "online" : p.detail}`).join("\n")}
       >
-        {online.length ? `${online.map((p) => p.name).join(", ")}` : "no backend reachable"}
+        {online.length ? online.map((p) => p.name).join(", ") : "no backend reachable"}
       </span>
       {tps > 0 && <span>{tps.toFixed(1)} tok/s</span>}
+
       <div className="ml-auto flex items-center gap-1">
+        <ModelPicker />
+        <span className="mx-1 h-4 w-px bg-white/10" />
         {names.map((name) => (
           <Button
             key={name}

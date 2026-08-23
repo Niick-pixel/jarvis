@@ -210,6 +210,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/models/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Model Options
+         * @description Every reachable model, judged against this machine, best first.
+         *
+         *     This is the same ranking the app uses to pick a model on its own, so what the picker shows and
+         *     what the app does cannot disagree.
+         */
+        get: operations["model_options_api_models_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/models/selected": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Selected */
+        get: operations["get_selected_api_models_selected_get"];
+        /** Set Selected */
+        put: operations["set_selected_api_models_selected_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/providers": {
         parameters: {
             query?: never;
@@ -637,6 +678,33 @@ export interface components {
              */
             supports_prefix: boolean;
         };
+        /**
+         * ModelOption
+         * @description A model the app can actually reach, judged against this machine.
+         */
+        ModelOption: {
+            budget?: components["schemas"]["VramBudget"] | null;
+            model: components["schemas"]["ModelInfo"];
+            /** Reason */
+            reason: string;
+            /**
+             * Recommended
+             * @default false
+             */
+            recommended: boolean;
+            /** Recommended Ctx Len */
+            recommended_ctx_len: number;
+            /**
+             * Remote
+             * @default false
+             */
+            remote: boolean;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "fits" | "tight" | "needs_offload" | "unavailable";
+        };
         /** ModelRecommendation */
         ModelRecommendation: {
             /** Ctx Len Max */
@@ -791,6 +859,11 @@ export interface components {
              * @default 0.95
              */
             top_p: number;
+        };
+        /** SelectedModel */
+        SelectedModel: {
+            /** Model Id */
+            model_id?: string | null;
         };
         /**
          * StreamEnvelope
@@ -1366,6 +1439,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ModelInfo"][];
+                };
+            };
+        };
+    };
+    model_options_api_models_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelOption"][];
+                };
+            };
+        };
+    };
+    get_selected_api_models_selected_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SelectedModel"];
+                };
+            };
+        };
+    };
+    set_selected_api_models_selected_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SelectedModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SelectedModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

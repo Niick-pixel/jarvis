@@ -6,7 +6,9 @@ import type {
   Health,
   Message,
   ModelInfo,
+  ModelOption,
   ModelRecommendation,
+  SelectedModel,
   ProviderInfo,
 } from "./types";
 
@@ -36,6 +38,13 @@ export const api = {
   providers: () => request<ProviderInfo[]>("/api/providers"),
   models: () => request<ModelInfo[]>("/api/models"),
   hardware: () => request<HardwareReport>("/api/hardware"),
+  modelOptions: () => request<ModelOption[]>("/api/models/options"),
+  selectedModel: () => request<SelectedModel>("/api/models/selected"),
+  selectModel: (modelId: string | null) =>
+    request<SelectedModel>("/api/models/selected", {
+      method: "PUT",
+      body: JSON.stringify({ model_id: modelId }),
+    }),
   catalog: () => request<ModelRecommendation[]>("/api/hardware/catalog"),
 
   listConversations: () => request<Conversation[]>("/api/conversations"),

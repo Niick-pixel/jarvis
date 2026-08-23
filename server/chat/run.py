@@ -13,7 +13,7 @@ from server.context.assembler import assemble, to_prompt_messages
 from server.db import repo
 from server.db.connection import Database
 from server.errors import NotFound, SovereignError
-from server.hardware import probe, recommend
+from server.hardware import probe, recommend, selection
 from server.models.context import ContextAssembly
 from server.models.params import SamplingParams
 from server.models.provider import ModelInfo
@@ -38,6 +38,35 @@ class PreparedRun:
     ctx_len: int
 
 
+async def resolve_model_id(
+    db: Database, registry: ProviderRegistry, settings: Settings, requested: str | None
+) -> str | None:
+    """Which model to use, in order: what the request asked for, what you pinned, what fits.
+
+    A pinned model that is no longer reachable - you closed LM Studio, llama.cpp is serving
+    something else - silently falls back to the automatic choice rather than failing the request.
+    Switching backends should not mean editing settings.
+    """
+    if requested:
+        return requested
+
+    available = await registry.models()
+    with db.session() as conn:
+        pinned = repo.settings.get(conn, repo.settings.SELECTED_MODEL)
+    if pinned and any(m.id == pinned for m in available):
+        return str(pinned)
+
+    gpus, _ = probe.probe_gpus()
+    ranked = selection.rank(
+        available,
+        gpu=gpus[0] if gpus else None,
+        browser_reserve_mb=settings.hardware.browser_vram_reserve_mb,
+        kv_dtype=settings.hardware.kv_cache_dtype,
+    )
+    choice = selection.best(ranked)
+    return choice.model.id if choice else None
+
+
 async def prepare(
     db: Database,
     registry: ProviderRegistry,
@@ -46,7 +75,8 @@ async def prepare(
 ) -> PreparedRun:
     from server.graph import dag
 
-    provider, model = await registry.resolve(request.model_id)
+    model_id = await resolve_model_id(db, registry, settings, request.model_id)
+    provider, model = await registry.resolve(model_id)
     with db.session() as conn:
         conversation = repo.conversations.get(conn, request.conversation_id)
         if conversation is None:
