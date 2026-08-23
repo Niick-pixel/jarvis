@@ -1,4 +1,6 @@
 import type {
+  BlockPref,
+  ContextAssembly,
   Conversation,
   ConversationTree,
   ErrorBody,
@@ -8,8 +10,9 @@ import type {
   ModelInfo,
   ModelOption,
   ModelRecommendation,
-  SelectedModel,
   ProviderInfo,
+  SelectedModel,
+  SiblingSet,
 } from "./types";
 
 export class ApiError extends Error {
@@ -60,6 +63,27 @@ export const api = {
     request<Message>(`/api/conversations/${id}/messages`, {
       method: "POST",
       body: JSON.stringify({ content, role: "user", parent_id: parentId }),
+    }),
+  editMessage: (id: string, content: string) =>
+    request<Message>(`/api/messages/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ content }),
+    }),
+  siblings: (id: string) => request<SiblingSet>(`/api/messages/${id}/siblings`),
+  setActiveLeaf: (conversationId: string, messageId: string) =>
+    request<Conversation>(`/api/conversations/${conversationId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ active_leaf_id: messageId }),
+    }),
+  previewContext: (conversationId: string) =>
+    request<ContextAssembly>("/api/context/preview", {
+      method: "POST",
+      body: JSON.stringify({ conversation_id: conversationId }),
+    }),
+  setBlockPrefs: (conversationId: string, prefs: BlockPref[]) =>
+    request<BlockPref[]>("/api/context/blocks", {
+      method: "PATCH",
+      body: JSON.stringify({ conversation_id: conversationId, prefs }),
     }),
   stopRun: (runId: string) =>
     request<{ status: string }>(`/api/chat/runs/${runId}/stop`, { method: "POST" }),

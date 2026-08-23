@@ -500,7 +500,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "system" | "memory" | "rag" | "pinned" | "history" | "tool" | "nudge";
+            kind: "system" | "memory" | "rag" | "pinned" | "history" | "tool" | "nudge" | "prefix";
             /** Label */
             label: string;
             /** Ord */
@@ -625,7 +625,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "system" | "memory" | "rag" | "pinned" | "history" | "tool" | "nudge";
+            kind: "system" | "memory" | "rag" | "pinned" | "history" | "tool" | "nudge" | "prefix";
             /** Label */
             label: string;
             /**

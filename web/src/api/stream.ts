@@ -12,6 +12,7 @@ export interface StreamHandlers {
 export interface ChatRequestBody {
   conversation_id: string;
   content?: string | null;
+  continue_from?: string | null;
   parent_id?: string | null;
   model_id?: string | null;
   params?: SamplingParams;

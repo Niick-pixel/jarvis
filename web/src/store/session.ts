@@ -2,7 +2,7 @@
 // the server owns the truth, this holds what is on screen.
 import { create } from "zustand";
 import { api } from "../api/client";
-import { startChatStream } from "../api/stream";
+import { startChatStream, type ChatRequestBody } from "../api/stream";
 import type { ContextAssembly, Conversation, ErrorBody, Message, Remedy } from "../api/types";
 import { useVisual } from "./visual";
 
@@ -26,6 +26,8 @@ interface SessionState {
   openConversation: (id: string) => Promise<void>;
   lastPrompt: string | null;
   send: (content: string, ctxLen?: number | null) => Promise<void>;
+  continueFrom: (messageId: string) => Promise<void>;
+  runStream: (body: ChatRequestBody) => Promise<void>;
   applyRemedy: (remedy: Remedy) => Promise<void>;
   stop: () => Promise<void>;
   dismissError: () => void;
@@ -84,10 +86,21 @@ export const useSession = create<SessionState>((set, get) => ({
   send: async (content: string, ctxLen: number | null = null) => {
     const conversation = get().conversation;
     if (!conversation || get().runId) return;
+    set({ lastPrompt: content });
+    await get().runStream({ conversation_id: conversation.id, content, ctx_len: ctxLen });
+  },
 
-    set({ visual: "thinking", error: null, streamingText: "", assembly: null, lastPrompt: content });
+  /** Continue an assistant message you edited: its text becomes the prefix (BRIEF.md 4.1). */
+  continueFrom: async (messageId: string) => {
+    const conversation = get().conversation;
+    if (!conversation || get().runId) return;
+    await get().runStream({ conversation_id: conversation.id, continue_from: messageId });
+  },
+
+  runStream: async (body) => {
+    set({ visual: "thinking", error: null, streamingText: "", assembly: null });
     await startChatStream(
-      { conversation_id: conversation.id, content, ctx_len: ctxLen },
+      body,
       {
         onEvent: (event) => {
           switch (event.type) {

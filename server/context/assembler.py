@@ -28,6 +28,8 @@ async def assemble(
     ctx_len: int,
     max_gen_tokens: int,
     prefs: dict[str, BlockPref] | None = None,
+    assistant_prefix: str | None = None,
+    prefix_source_id: str | None = None,
 ) -> ContextAssembly:
     counter = TokenCounter(provider, model_id)
     prefs = prefs or {}
@@ -59,6 +61,23 @@ async def assemble(
                 content=message.content,
                 token_count=await counter.count(message.content) + RESERVED_TEMPLATE_TOKENS,
                 source_ref=message.id,
+            )
+        )
+
+    if assistant_prefix:
+        # Continuing an edited turn: the prefix is delivered through the provider's completion
+        # endpoint rather than as a chat message, but it occupies context exactly like one. The
+        # inspector would be lying by omission if it did not appear here.
+        blocks.append(
+            ContextBlock(
+                id=new_id("blk"),
+                ord=len(blocks),
+                kind="prefix",
+                label=f"assistant (continuing): {_preview(assistant_prefix)}",
+                content=assistant_prefix,
+                token_count=await counter.count(assistant_prefix),
+                pinned=True,
+                source_ref=prefix_source_id,
             )
         )
 
@@ -156,6 +175,8 @@ def to_prompt_messages(assembly: ContextAssembly, path: list[Message]) -> list[P
     for block in assembly.blocks:
         if not block.included:
             continue
+        if block.kind == "prefix":
+            continue  # Sent as the completion prefix, not as a message.
         if block.kind == "system":
             out.append(PromptMessage(role="system", content=block.content))
         elif block.kind == "history":

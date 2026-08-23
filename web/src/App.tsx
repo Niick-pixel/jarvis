@@ -1,10 +1,11 @@
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import Composer from "./chat/Composer";
-import ContextReadout from "./chat/ContextReadout";
+import ContextBar from "./context/ContextBar";
 import Conversations from "./chat/Conversations";
 import ErrorBanner from "./chat/ErrorBanner";
 import MessageList from "./chat/MessageList";
+import Minimap from "./graph/Minimap";
 import StatusBar from "./chat/StatusBar";
 import Background from "./scene/Background";
 import EdgeGlow from "./scene/EdgeGlow";
@@ -41,12 +42,13 @@ export default function App() {
               onToggleSidebar={() => setSidebar((open) => !open)}
             />
           </div>
-          <main className="flex min-h-0 flex-1 flex-col">
+          <main className="relative flex min-h-0 flex-1 flex-col">
+            <Minimap />
             <MessageList />
           </main>
           <div className="scrim">
             <ErrorBanner />
-            <ContextReadout />
+            <ContextBar />
             <Composer />
           </div>
         </div>

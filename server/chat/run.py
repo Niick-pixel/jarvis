@@ -122,6 +122,8 @@ async def prepare(
             ctx_len=ctx_len,
             max_gen_tokens=params.max_tokens,
             prefs=repo.blocks.for_conversation(conn, conversation.id),
+            assistant_prefix=prefix,
+            prefix_source_id=request.continue_from,
         )
         prompt = to_prompt_messages(assembly, path)
 
@@ -213,38 +215,3 @@ def stored_assembly(db: Database, run_id: str) -> ContextAssembly | None:
     if row is None or not row["assembly_json"]:
         return None
     return ContextAssembly(**json.loads(row["assembly_json"]))
-
-
-async def assemble_preview(
-    db: Database,
-    registry: ProviderRegistry,
-    settings: Settings,
-    *,
-    conversation_id: str,
-    parent_id: str | None,
-    model_id: str | None,
-    ctx_len: int | None,
-    max_gen_tokens: int,
-) -> ContextAssembly:
-    """What would go into the next request, without making one."""
-    from server.graph import dag
-
-    resolved = await resolve_model_id(db, registry, settings, model_id)
-    provider, model = await registry.resolve(resolved)
-    with db.session() as conn:
-        conversation = repo.conversations.get(conn, conversation_id)
-        if conversation is None:
-            raise NotFound("Conversation")
-        messages = repo.messages.list_for_conversation(conn, conversation_id)
-        leaf = parent_id or conversation.active_leaf_id
-        path = dag.ancestors(messages, leaf) if leaf else []
-        request = ChatRequest(conversation_id=conversation_id, ctx_len=ctx_len)
-        return await assemble(
-            conversation=conversation,
-            path=path,
-            provider=provider,
-            model_id=model.id,
-            ctx_len=_resolve_ctx_len(request, model, settings),
-            max_gen_tokens=max_gen_tokens,
-            prefs=repo.blocks.for_conversation(conn, conversation_id),
-        )

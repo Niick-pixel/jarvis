@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from server.chat.run import assemble_preview
+from server.context.preview import assemble_preview
 from server.db import repo
 from server.db.repo.blocks import BlockPref
 from server.deps import State
