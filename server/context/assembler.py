@@ -30,6 +30,7 @@ async def assemble(
     prefs: dict[str, BlockPref] | None = None,
     assistant_prefix: str | None = None,
     prefix_source_id: str | None = None,
+    nudge: str | None = None,
 ) -> ContextAssembly:
     counter = TokenCounter(provider, model_id)
     prefs = prefs or {}
@@ -61,6 +62,20 @@ async def assemble(
                 content=message.content,
                 token_count=await counter.count(message.content) + RESERVED_TEMPLATE_TOKENS,
                 source_ref=message.id,
+            )
+        )
+
+    if nudge:
+        # A nudge changes what the model was told. It belongs in the block list like anything else.
+        blocks.append(
+            ContextBlock(
+                id=new_id("blk"),
+                ord=len(blocks),
+                kind="nudge",
+                label=f"nudge: {_preview(nudge)}",
+                content=nudge,
+                token_count=await counter.count(nudge),
+                pinned=True,
             )
         )
 
@@ -177,7 +192,7 @@ def to_prompt_messages(assembly: ContextAssembly, path: list[Message]) -> list[P
             continue
         if block.kind == "prefix":
             continue  # Sent as the completion prefix, not as a message.
-        if block.kind == "system":
+        if block.kind in ("system", "nudge"):
             out.append(PromptMessage(role="system", content=block.content))
         elif block.kind == "history":
             out.append(

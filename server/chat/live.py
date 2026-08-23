@@ -25,6 +25,8 @@ class LiveRun:
     stop_reason: StopReason = "user_stop"
     finished: bool = False
     last_index: int = -1
+    done: asyncio.Event = field(default_factory=asyncio.Event)
+    """Set once the run's rows are written, so a nudge can continue from a settled partial."""
     subscribers: set[asyncio.Queue[StreamEvent | None]] = field(default_factory=set)
 
     def publish(self, event: StreamEvent) -> None:
@@ -37,6 +39,7 @@ class LiveRun:
 
     def close(self) -> None:
         self.finished = True
+        self.done.set()
         for queue in list(self.subscribers):
             with _ignore_full():
                 queue.put_nowait(None)

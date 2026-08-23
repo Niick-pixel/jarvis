@@ -8,6 +8,7 @@ instrument. `make check` stays fast enough to run on every commit.
 from __future__ import annotations
 
 import asyncio
+import random
 from collections.abc import AsyncIterator
 from pathlib import Path
 
@@ -37,6 +38,7 @@ class FakeProvider:
         delay_s: float = 0.0,
         fail_at: int | None = None,
         ctx_len_max: int = 4096,
+        vary_by_seed: bool = False,
     ) -> None:
         self.name = "fake"
         self.base_url = "memory://fake"
@@ -44,6 +46,8 @@ class FakeProvider:
         self.delay_s = delay_s
         self.fail_at = fail_at
         self.ctx_len_max = ctx_len_max
+        self.vary_by_seed = vary_by_seed
+        """When set, output depends on the seed - otherwise a replay test proves nothing."""
         self.started = asyncio.Event()
         self.prompts: list[list[PromptMessage]] = []
         self.prefixes: list[str | None] = []
@@ -86,7 +90,10 @@ class FakeProvider:
         self.prompts.append(messages)
         self.prefixes.append(assistant_prefix)
         self.started.set()
-        for index, text in enumerate(self.script):
+        script = list(self.script)
+        if self.vary_by_seed:
+            random.Random(params.seed).shuffle(script)
+        for index, text in enumerate(script):
             if self.fail_at is not None and index == self.fail_at:
                 raise ProviderError("scripted failure")
             if self.delay_s:
@@ -102,7 +109,7 @@ class FakeProvider:
             )
         yield Usage(
             prompt_tokens=7,
-            gen_tokens=len(self.script),
+            gen_tokens=len(script),
             prompt_eval_ms=10,
             gen_ms=20,
             stop_reason="eos",

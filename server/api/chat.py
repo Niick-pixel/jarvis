@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import suppress
 from typing import Annotated
 
 from fastapi import APIRouter, Header
+from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 from server.chat import execute as executor
 from server.chat import run as runner
 from server.chat import sse
+from server.db import repo
 from server.deps import State
 from server.errors import ErrorBody, NotFound
 from server.models.stream import ChatRequest, StreamEnvelope
@@ -48,6 +51,37 @@ async def resume_run(
 ) -> EventSourceResponse:
     """Reattach to a run, live or finished, replaying exactly what this client has not seen."""
     return EventSourceResponse(sse.stream_resume(state.db, state.live, run_id, last_event_id))
+
+
+class NudgeRequest(BaseModel):
+    text: str
+
+
+class NudgeResult(BaseModel):
+    message_id: str
+    token_idx: int
+    """Where the interjection landed, so the transcript can mark the exact spot."""
+
+
+@router.post("/runs/{run_id}/nudge")
+async def nudge_run(run_id: str, body: NudgeRequest, state: State) -> NudgeResult:
+    """Interrupt without starting over (BRIEF.md 4.4).
+
+    This records the interjection and stops the run, keeping the partial. The client then streams
+    a continuation with `continue_from` and `nudge` set - same machinery as editing and carrying
+    on, which is exactly what a nudge is.
+    """
+    run = state.live.get(run_id)
+    if run is None or run.finished:
+        raise NotFound("Active run")
+    landed = max(run.last_index + 1, 0)
+    with state.db.session() as conn:
+        repo.runs.add_nudge(conn, message_id=run.message_id, token_idx=landed, text=body.text)
+    state.live.stop(run_id, "nudge")
+    # Wait for the finaliser so the partial is on disk before the caller continues from it.
+    with suppress(TimeoutError):
+        await asyncio.wait_for(run.done.wait(), timeout=10)
+    return NudgeResult(message_id=run.message_id, token_idx=landed)
 
 
 @router.post("/runs/{run_id}/stop")

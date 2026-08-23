@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 
+from server.chat.steering import resolve_steering
 from server.context.assembler import assemble, to_prompt_messages
 from server.db import repo
 from server.db.connection import Database
@@ -103,15 +104,12 @@ async def prepare(
         params = request.params.resolved()
         _preflight_vram(model, ctx_len, settings, provider)
 
-        # Continuing an edited assistant turn: its text becomes the prefix, and the continuation
-        # lands in a new sibling. The edited node stays exactly as you left it.
-        prefix: str | None = None
-        if request.continue_from:
-            source = repo.messages.get(conn, request.continue_from)
-            if source is None:
-                raise NotFound("Message to continue")
-            prefix = source.content
-            parent_id = source.parent_id
+        steering = resolve_steering(conn, request)
+        prefix = steering.prefix
+        if steering.source_id:
+            parent_id = steering.parent_id
+        if steering.params is not None:
+            params = steering.params
 
         path = dag.ancestors(messages, parent_id) if parent_id else []
         assembly = await assemble(
@@ -123,7 +121,8 @@ async def prepare(
             max_gen_tokens=params.max_tokens,
             prefs=repo.blocks.for_conversation(conn, conversation.id),
             assistant_prefix=prefix,
-            prefix_source_id=request.continue_from,
+            prefix_source_id=steering.source_id,
+            nudge=request.nudge,
         )
         prompt = to_prompt_messages(assembly, path)
 
@@ -136,8 +135,8 @@ async def prepare(
             model_id=model.id,
             params=params,
             status="streaming",
-            edited_from_id=request.continue_from,
-            forked_reason="edit" if request.continue_from else None,
+            edited_from_id=steering.source_id,
+            forked_reason=steering.reason,
         )
         run_id = repo.runs.create(
             conn,

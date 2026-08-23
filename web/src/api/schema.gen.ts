@@ -25,6 +25,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/chat/runs/{run_id}/nudge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Nudge Run
+         * @description Interrupt without starting over (BRIEF.md 4.4).
+         *
+         *     This records the interjection and stops the run, keeping the partial. The client then streams
+         *     a continuation with `continue_from` and `nudge` set - same machinery as editing and carrying
+         *     on, which is exactly what a nudge is.
+         */
+        post: operations["nudge_run_api_chat_runs__run_id__nudge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chat/runs/{run_id}/stop": {
         parameters: {
             query?: never;
@@ -233,6 +257,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/hud/counters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Hud Counters */
+        get: operations["hud_counters_api_hud_counters_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/hud/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Hud Stream */
+        get: operations["hud_stream_api_hud_stream_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/messages/merge": {
         parameters: {
             query?: never;
@@ -290,6 +348,29 @@ export interface paths {
          * @description Powers the inline `< 2/4 >` switcher.
          */
         get: operations["siblings_api_messages__message_id__siblings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/messages/{message_id}/tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Message Tokens
+         * @description Per-token probabilities for the tint layer and the alternatives popover.
+         *
+         *     A backend that never reported logprobs yields an empty list and supports_logprobs=False, and
+         *     the UI hides the x-ray for that message rather than showing a flat, meaningless tint.
+         */
+        get: operations["message_tokens_api_messages__message_id__tokens_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -443,8 +524,11 @@ export interface components {
             conversation_id: string;
             /** Ctx Len */
             ctx_len?: number | null;
+            force_token?: components["schemas"]["ForceToken"] | null;
             /** Model Id */
             model_id?: string | null;
+            /** Nudge */
+            nudge?: string | null;
             /**
              * @default {
              *       "max_tokens": 2048,
@@ -459,6 +543,8 @@ export interface components {
             params: components["schemas"]["SamplingParams"];
             /** Parent Id */
             parent_id?: string | null;
+            /** Rerun Of */
+            rerun_of?: string | null;
         };
         /** ContextAssembly */
         ContextAssembly: {
@@ -636,6 +722,18 @@ export interface components {
             /** Token Count */
             token_count: number;
         };
+        /**
+         * ForceToken
+         * @description Truncate a message at one token and force a different one in its place.
+         */
+        ForceToken: {
+            /** Message Id */
+            message_id: string;
+            /** Token */
+            token: string;
+            /** Token Idx */
+            token_idx: number;
+        };
         /** GpuInfo */
         GpuInfo: {
             /** Index */
@@ -711,6 +809,17 @@ export interface components {
             /** Ram Total Mb */
             ram_total_mb: number;
         };
+        /** LifetimeCounters */
+        LifetimeCounters: {
+            /** Cost Avoided Usd */
+            cost_avoided_usd: number;
+            /** Rate Per Million Usd */
+            rate_per_million_usd: number;
+            /** Runs Completed */
+            runs_completed: number;
+            /** Tokens Generated */
+            tokens_generated: number;
+        };
         /** MergeRequest */
         MergeRequest: {
             /**
@@ -741,7 +850,7 @@ export interface components {
             /** Edited From Id */
             edited_from_id?: string | null;
             /** Forked Reason */
-            forked_reason?: ("edit" | "rerun" | "forced_token" | "merge") | null;
+            forked_reason?: ("edit" | "rerun" | "forced_token" | "merge" | "nudge") | null;
             /** Id */
             id: string;
             /** Model Id */
@@ -786,6 +895,25 @@ export interface components {
         MessageEdit: {
             /** Content */
             content: string;
+        };
+        /** MessageTokens */
+        MessageTokens: {
+            /** Mean Logprob */
+            mean_logprob?: number | null;
+            /** Message Id */
+            message_id: string;
+            /**
+             * Nudges
+             * @default []
+             */
+            nudges: components["schemas"]["NudgeMark"][];
+            /** Supports Logprobs */
+            supports_logprobs: boolean;
+            /**
+             * Tokens
+             * @default []
+             */
+            tokens: components["schemas"]["TokenView"][];
         };
         /** ModelInfo */
         ModelInfo: {
@@ -908,6 +1036,27 @@ export interface components {
              * @enum {string}
              */
             type: "nudge";
+        };
+        /** NudgeMark */
+        NudgeMark: {
+            /** Created At */
+            created_at: number;
+            /** Text */
+            text: string;
+            /** Token Idx */
+            token_idx: number;
+        };
+        /** NudgeRequest */
+        NudgeRequest: {
+            /** Text */
+            text: string;
+        };
+        /** NudgeResult */
+        NudgeResult: {
+            /** Message Id */
+            message_id: string;
+            /** Token Idx */
+            token_idx: number;
         };
         /** PrefsUpdate */
         PrefsUpdate: {
@@ -1079,6 +1228,29 @@ export interface components {
              */
             type: "token";
         };
+        /** TokenView */
+        TokenView: {
+            /** Byte End */
+            byte_end: number;
+            /** Byte Start */
+            byte_start: number;
+            /** Idx */
+            idx: number;
+            /** Logprob */
+            logprob?: number | null;
+            /** Text */
+            text: string;
+            /**
+             * Timing Ms
+             * @default 0
+             */
+            timing_ms: number;
+            /**
+             * Top
+             * @default []
+             */
+            top: components["schemas"]["Alternative"][];
+        };
         /** UsageEvent */
         UsageEvent: {
             /** Gen Ms */
@@ -1221,6 +1393,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    nudge_run_api_chat_runs__run_id__nudge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NudgeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NudgeResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1673,6 +1880,46 @@ export interface operations {
             };
         };
     };
+    hud_counters_api_hud_counters_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LifetimeCounters"];
+                };
+            };
+        };
+    };
+    hud_stream_api_hud_stream_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
     merge_messages_api_messages_merge_post: {
         parameters: {
             query?: never;
@@ -1790,6 +2037,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiblingSet"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    message_tokens_api_messages__message_id__tokens_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageTokens"];
                 };
             };
             /** @description Validation Error */
