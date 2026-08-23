@@ -8,9 +8,9 @@ messages and continue from your version, see exactly what went into the context 
 model's per-token uncertainty and steer it, and reproduce any answer exactly. The full spec is in
 [`BRIEF.md`](BRIEF.md); the plan of record and its milestones are in [`PLAN.md`](PLAN.md).
 
-**Status: M1 (the spine) is complete.** Working chat over SSE, the message DAG on disk, real context
-accounting, the shader background with its state machine, and stop-and-keep. M2 turns the DAG into
-a branching UI; M3 adds the token x-ray and live steering.
+**Status: M1 and M2 are complete.** Working chat over SSE, the message DAG with a branching UI, the
+interactive Context Inspector, and the fluid mesh background with its state machine. M3 adds the
+token x-ray and live steering; memory arrives at M4.
 
 ## Requirements
 
@@ -43,8 +43,13 @@ make dev
   kill the generation.
 - **Esc stops and keeps.** The partial answer stays, marked as stopped. Cancellation races the stop
   signal against each token, so it does not wait on a slow backend.
-- **Every message is a DAG node** with its parent, model, sampling params and seed recorded. The
-  branching UI arrives in M2; the data it needs is already being written.
+- **Edit any message, including the assistant's own**, and continue from your version. Saving forks
+  a sibling — the original stays reachable through the inline `‹ 3/3 ›` switcher, and nothing is
+  ever destroyed. A tree minimap shows every branch; clicking a node reads it.
+- **An interactive Context Inspector.** One segment per block, sized by its real token count. Click
+  to read exactly what went in, pin it so the budget can never evict it, or switch it off. Anything
+  left out is named beneath the bar, including the continuation prefix, which occupies context even
+  though it is not a chat message.
 - **Context accounting** using the backend's own tokenizer. If a backend has no tokenizer the
   numbers are labelled estimated instead of looking exact, and anything evicted is announced.
 - **Honest capability negotiation.** A backend without logprobs hides the x-ray rather than faking

@@ -731,6 +731,24 @@ The plan survived contact, with five changes worth recording.
    the event shapes never reach the generated TypeScript, and the frontend would have to hand-write
    the one part of the API rule 0.5 most cares about.
 
+### M2 as built
+
+Four more deviations, all recorded rather than quietly taken.
+
+1. **Migration 003 adds no `context_blocks` snapshot table.** M1 already stores the exact assembly
+   as JSON on the run, because resume needed it. Exploding the same data into rows would be two
+   records of one truth. 003 adds what M2 actually needed: `block_prefs`, because a pin should
+   outlive the request that set it.
+2. **A new `prefix` block kind.** Continuing an edited turn sends that text through the provider's
+   completion endpoint rather than as a chat message, so it never appeared in the block list while
+   occupying context exactly like one. The inspector was lying by omission; the prefix is now a
+   block with its real token count.
+3. **`assemble_preview` moved to `context/preview.py`** when the file-length check caught
+   `chat/run.py` at 252 lines.
+4. **Continue-from composes a new sibling** holding prefix + continuation, rather than appending to
+   the edited node. The edited node survives as "just my edit, no continuation", and the insert-only
+   invariant holds. This is why editing then continuing leaves three siblings, not two.
+
 **One known gap.** The frontend's SSE frame parser is part of the streaming path that rule 0.7 says
 to test, but there is no frontend test runner — deliberately, since all three test subjects were
 meant to be backend logic. A CRLF bug in that parser got through to a browser and was caught by
