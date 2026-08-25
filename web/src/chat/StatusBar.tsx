@@ -13,6 +13,7 @@ interface Props {
   performanceMode: boolean;
   onPerformanceMode: (value: boolean) => void;
   onToggleSidebar: () => void;
+  onToggleMemory: () => void;
 }
 
 export default function StatusBar({
@@ -21,6 +22,7 @@ export default function StatusBar({
   performanceMode,
   onPerformanceMode,
   onToggleSidebar,
+  onToggleMemory,
 }: Props) {
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const tps = useSession((s) => s.tps);
@@ -52,6 +54,9 @@ export default function StatusBar({
       {tps > 0 && <span>{tps.toFixed(1)} tok/s</span>}
 
       <div className="ml-auto flex items-center gap-1">
+        <Button onClick={onToggleMemory} title="What the app remembers about you">
+          Memory
+        </Button>
         <Hud />
         <ModelPicker />
         <span className="mx-1 h-4 w-px bg-white/10" />

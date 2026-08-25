@@ -16,6 +16,7 @@ from server.api import (
     conversations,
     hardware,
     hud,
+    memory,
     messages,
     models_api,
     xray,
@@ -82,6 +83,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         context.router,
         xray.router,
         hud.router,
+        memory.router,
     ):
         app.include_router(router)
 

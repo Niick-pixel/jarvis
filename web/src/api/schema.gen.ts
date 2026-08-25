@@ -291,6 +291,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/memory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Memory */
+        get: operations["list_memory_api_memory_get"];
+        put?: never;
+        /** Create Memory */
+        post: operations["create_memory_api_memory_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/memory/batches/for-message/{message_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Batch For Message
+         * @description Wait for the capture this message triggered, and report what it wrote.
+         *
+         *     Awaiting the task beats polling: the client asked the question, so it can wait for the answer
+         *     rather than guessing when to look. An empty batch means nothing durable was found.
+         */
+        get: operations["batch_for_message_api_memory_batches_for_message__message_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/memory/batches/{batch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Undo Batch
+         * @description Undo one automatic capture: deletes exactly the files that batch wrote.
+         */
+        delete: operations["undo_batch_api_memory_batches__batch_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/memory/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Forget
+         * @description Forget this: the file is deleted and the index rebuilt. Not a tombstone.
+         */
+        delete: operations["forget_api_memory__entry_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Memory */
+        patch: operations["update_memory_api_memory__entry_id__patch"];
+        trace?: never;
+    };
+    "/api/memory/{entry_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** History */
+        get: operations["history_api_memory__entry_id__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/messages/merge": {
         parameters: {
             query?: never;
@@ -546,6 +645,15 @@ export interface components {
             /** Rerun Of */
             rerun_of?: string | null;
         };
+        /** Commit */
+        Commit: {
+            /** Message */
+            message: string;
+            /** Sha */
+            sha: string;
+            /** When */
+            when: string;
+        };
         /** ContextAssembly */
         ContextAssembly: {
             /** Blocks */
@@ -734,6 +842,13 @@ export interface components {
             /** Token Idx */
             token_idx: number;
         };
+        /** ForgetResult */
+        ForgetResult: {
+            /** Forgotten */
+            forgotten: string;
+            /** Remaining */
+            remaining: number;
+        };
         /** GpuInfo */
         GpuInfo: {
             /** Index */
@@ -837,6 +952,100 @@ export interface components {
             runs_completed: number;
             /** Tokens Generated */
             tokens_generated: number;
+        };
+        /**
+         * MemoryBatch
+         * @description What one auto-extraction wrote, so the UI can say 'saved 2 things' and offer undo.
+         */
+        MemoryBatch: {
+            /** Batch Id */
+            batch_id: string;
+            /** Entries */
+            entries: components["schemas"]["MemoryEntry"][];
+        };
+        /** MemoryCreate */
+        MemoryCreate: {
+            /**
+             * Always
+             * @default false
+             */
+            always: boolean;
+            /** Content */
+            content: string;
+            /**
+             * Scope
+             * @default global
+             * @enum {string}
+             */
+            scope: "global" | "project" | "conversation";
+            /** Scope Ref */
+            scope_ref?: string | null;
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+        };
+        /** MemoryEntry */
+        MemoryEntry: {
+            /**
+             * Always
+             * @default false
+             */
+            always: boolean;
+            /** Batch Id */
+            batch_id?: string | null;
+            /** Content */
+            content: string;
+            /**
+             * Created At
+             * @default 0
+             */
+            created_at: number;
+            /** Id */
+            id: string;
+            /** Last Used At */
+            last_used_at?: number | null;
+            /** Path */
+            path: string;
+            /**
+             * Retrieved Count
+             * @default 0
+             */
+            retrieved_count: number;
+            /**
+             * Scope
+             * @default global
+             * @enum {string}
+             */
+            scope: "global" | "project" | "conversation";
+            /** Scope Ref */
+            scope_ref?: string | null;
+            /**
+             * Source
+             * @default manual
+             * @enum {string}
+             */
+            source: "manual" | "auto";
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+            /**
+             * Updated At
+             * @default 0
+             */
+            updated_at: number;
+        };
+        /** MemoryUpdate */
+        MemoryUpdate: {
+            /** Always */
+            always?: boolean | null;
+            /** Content */
+            content?: string | null;
+            /** Title */
+            title?: string | null;
         };
         /** MergeRequest */
         MergeRequest: {
@@ -1935,6 +2144,218 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HudSample"];
                     "text/event-stream": unknown;
+                };
+            };
+        };
+    };
+    list_memory_api_memory_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryEntry"][];
+                };
+            };
+        };
+    };
+    create_memory_api_memory_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemoryCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryEntry"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    batch_for_message_api_memory_batches_for_message__message_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryBatch"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    undo_batch_api_memory_batches__batch_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForgetResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    forget_api_memory__entry_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForgetResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_memory_api_memory__entry_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MemoryUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryEntry"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    history_api_memory__entry_id__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commit"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

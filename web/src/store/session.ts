@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { api } from "../api/client";
 import { startChatStream, type ChatRequestBody } from "../api/stream";
 import type { ContextAssembly, Conversation, ErrorBody, Message, Remedy } from "../api/types";
+import { useMemory } from "./memory";
 import { useVisual } from "./visual";
 
 export type VisualState = "idle" | "listening" | "thinking" | "streaming" | "error";
@@ -142,6 +143,13 @@ export const useSession = create<SessionState>((set, get) => ({
         onFailure: (error) => set({ error, visual: "error" }),
         onClose: async () => {
           await get().refreshTree().catch(() => undefined);
+          const finished = get().streamingId;
+          if (finished) {
+            void useMemory
+              .getState()
+              .awaitCapture(finished)
+              .catch(() => undefined);
+          }
           set((s) => ({
             runId: null,
             streamingId: null,

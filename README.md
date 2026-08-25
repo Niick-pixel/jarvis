@@ -8,9 +8,9 @@ messages and continue from your version, see exactly what went into the context 
 model's per-token uncertainty and steer it, and reproduce any answer exactly. The full spec is in
 [`BRIEF.md`](BRIEF.md); the plan of record and its milestones are in [`PLAN.md`](PLAN.md).
 
-**Status: M1, M2 and M3 are complete.** Working chat over SSE, the message DAG with a branching UI,
+**Status: M1–M3 complete; M4 in progress** — memory has landed, RAG over your disk is next. Working chat over SSE, the message DAG with a branching UI,
 the interactive Context Inspector, the token x-ray with forced-token steering, live nudging,
-deterministic replay, and the Sovereign HUD. M4 adds knowledge: RAG over your disk, and memory.
+deterministic replay, the Sovereign HUD, and memory you can read and delete.
 
 ## Requirements
 
@@ -69,6 +69,13 @@ make dev
 - **The Sovereign HUD.** Live VRAM, GPU load, tokens/sec, and a lifetime counter with the API spend
   avoided — printed alongside the rate it assumes, so it is an argument you can check rather than a
   number to believe.
+- **Memory as files you own.** Facts live as plain Markdown in `./memory/`, in a git repo that
+  auto-commits every change — so "diff history" is real history. They are captured automatically
+  after a turn and reported immediately: a toast names each fact and one click removes exactly that
+  batch. Nothing is written unseen. The Memory page shows where each fact came from, how many times
+  it has actually been retrieved, and its file path; "forget" deletes the file and reindexes, rather
+  than flagging a row. Every injected fact appears in the Context Inspector with its token cost, so
+  you can always see which memories shaped an answer.
 - **VRAM preflight.** If a request will not fit you get a sentence and a button that fixes it, not
   an OOM stack trace.
 - **Automatic model selection.** The app ranks every model it can reach against your actual card

@@ -8,6 +8,7 @@ auth_token = ""             # Only needed if you change host away from loopback.
 [paths]
 data_dir = "./data"         # jarvis.db lives here
 models_dir = "./models"     # downloaded GGUF files
+memory_dir = "./memory"     # your memory, as Markdown in a git repo you can read and edit
 
 [providers.llamacpp]
 enabled = true
@@ -37,3 +38,8 @@ performance_mode = "auto"   # auto | on | off - "auto" drops the shader when VRA
 [hardware]
 browser_vram_reserve_mb = 700   # Chromium GPU process + compositor share your card (see PLAN.md 1.1)
 kv_cache_dtype = "q8_0"         # q8_0 halves KV cost vs f16 at negligible quality cost
+
+[memory]
+auto_extract = true         # capture durable facts after a turn; always shown, always undoable
+min_answer_chars = 200      # skip short exchanges - a second generation is not free on a small card
+max_facts_per_turn = 3

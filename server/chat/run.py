@@ -15,6 +15,8 @@ from server.db import repo
 from server.db.connection import Database
 from server.errors import NotFound, SovereignError
 from server.hardware import probe, recommend, selection
+from server.ids import now_ms
+from server.knowledge import memory_index
 from server.models.context import ContextAssembly
 from server.models.params import SamplingParams
 from server.models.provider import ModelInfo
@@ -112,6 +114,16 @@ async def prepare(
             params = steering.params
 
         path = dag.ancestors(messages, parent_id) if parent_id else []
+
+        # Memory is retrieved against the turn being answered, and every entry that lands is
+        # recorded below - which is what makes "retrieved 14 times" a count rather than a guess.
+        query = request.content or next((m.content for m in reversed(path) if m.role == "user"), "")
+        memories = memory_index.retrieve(
+            conn,
+            query,
+            conversation_id=conversation.id,
+            project_id=conversation.project_id,
+        )
         assembly = await assemble(
             conversation=conversation,
             path=path,
@@ -123,6 +135,7 @@ async def prepare(
             assistant_prefix=prefix,
             prefix_source_id=steering.source_id,
             nudge=request.nudge,
+            memories=memories,
         )
         prompt = to_prompt_messages(assembly, path)
 
@@ -150,6 +163,8 @@ async def prepare(
             "UPDATE runs SET assembly_json = ? WHERE id = ?",
             (assembly.model_dump_json(), run_id),
         )
+        used = [b.source_ref for b in assembly.blocks if b.kind == "memory" and b.included]
+        memory_index.record_usage(conn, [r for r in used if r], assistant.id, now_ms())
         repo.conversations.touch(conn, conversation.id, active_leaf_id=assistant.id)
 
     return PreparedRun(

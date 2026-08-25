@@ -8,12 +8,12 @@ from fastapi import APIRouter, Header
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from server.chat import execute as executor
 from server.chat import run as runner
 from server.chat import sse
 from server.db import repo
 from server.deps import State
 from server.errors import ErrorBody, NotFound
+from server.knowledge import capture
 from server.models.stream import ChatRequest, StreamEnvelope
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -39,7 +39,7 @@ async def stream_chat(body: ChatRequest, state: State) -> EventSourceResponse:
     live_run = state.live.start(prepared.run_id, prepared.message_id, prepared.conversation_id)
     queue: asyncio.Queue = asyncio.Queue(maxsize=2048)
     live_run.subscribers.add(queue)
-    asyncio.create_task(executor.execute(state.db, state.live, prepared))
+    capture.register(state, prepared)
     return EventSourceResponse(sse.stream_new_run(prepared, queue))
 
 

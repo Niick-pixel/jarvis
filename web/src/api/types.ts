@@ -46,3 +46,6 @@ export type Alternative = S["Alternative"];
 export type NudgeMark = S["NudgeMark"];
 export type LifetimeCounters = S["LifetimeCounters"];
 export type HudSample = S["HudSample"];
+export type MemoryEntry = S["MemoryEntry"];
+export type MemoryBatch = S["MemoryBatch"];
+export type MemoryCommit = S["Commit"];

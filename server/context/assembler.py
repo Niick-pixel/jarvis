@@ -12,6 +12,7 @@ from server.db.repo.blocks import BlockPref
 from server.ids import new_id
 from server.models.context import ContextAssembly, ContextBlock, EvictionNotice
 from server.models.conversation import Conversation
+from server.models.memory import MemoryEntry
 from server.models.message import Message
 from server.providers.base import ModelProvider, PromptMessage
 
@@ -31,6 +32,7 @@ async def assemble(
     assistant_prefix: str | None = None,
     prefix_source_id: str | None = None,
     nudge: str | None = None,
+    memories: list[MemoryEntry] | None = None,
 ) -> ContextAssembly:
     counter = TokenCounter(provider, model_id)
     prefs = prefs or {}
@@ -47,6 +49,21 @@ async def assemble(
                 token_count=await counter.count(conversation.system_prompt),
                 pinned=True,
                 source_ref=conversation.id,
+            )
+        )
+
+    for entry in memories or []:
+        # Memory is injected as its own block so the answer can say which facts shaped it.
+        blocks.append(
+            ContextBlock(
+                id=new_id("blk"),
+                ord=len(blocks),
+                kind="memory",
+                label=f"memory: {entry.title or _preview(entry.content)}",
+                content=entry.content,
+                token_count=await counter.count(entry.content),
+                pinned=entry.always,
+                source_ref=entry.id,
             )
         )
 

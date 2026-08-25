@@ -33,6 +33,8 @@ class ServerConfig(BaseModel):
 class PathsConfig(BaseModel):
     data_dir: Path = Path("./data")
     models_dir: Path = Path("./models")
+    memory_dir: Path = Path("./memory")
+    """Plain Markdown, in its own git repo. The files are the truth (BRIEF.md 4.7)."""
 
     @property
     def db_path(self) -> Path:
@@ -65,6 +67,14 @@ class ProvidersConfig(BaseModel):
     )
 
 
+class MemoryConfig(BaseModel):
+    auto_extract: bool = True
+    """Capture facts automatically after a turn. Always visible, always undoable."""
+    min_answer_chars: int = 200
+    """Short exchanges rarely contain durable facts and are not worth a second generation."""
+    max_facts_per_turn: int = 3
+
+
 class VisualConfig(BaseModel):
     preset: Literal["aurora", "solar", "deep"] = "aurora"
     performance_mode: Literal["auto", "on", "off"] = "auto"
@@ -89,6 +99,7 @@ class Settings(BaseSettings):
     paths: PathsConfig = Field(default_factory=PathsConfig)
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     visual: VisualConfig = Field(default_factory=VisualConfig)
+    memory: MemoryConfig = Field(default_factory=MemoryConfig)
     hardware: HardwareConfig = Field(default_factory=HardwareConfig)
     openai_api_key: str = ""
 

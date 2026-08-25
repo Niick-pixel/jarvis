@@ -7,6 +7,9 @@ import type {
   HardwareReport,
   Health,
   LifetimeCounters,
+  MemoryBatch,
+  MemoryCommit,
+  MemoryEntry,
   Message,
   MessageTokens,
   ModelInfo,
@@ -93,6 +96,20 @@ export const api = {
     request<{ message_id: string; token_idx: number }>(`/api/chat/runs/${runId}/nudge`, {
       method: "POST",
       body: JSON.stringify({ text }),
+    }),
+  memory: () => request<MemoryEntry[]>("/api/memory"),
+  createMemory: (body: { title: string; content: string; always: boolean }) =>
+    request<MemoryEntry>("/api/memory", { method: "POST", body: JSON.stringify(body) }),
+  updateMemory: (id: string, body: { title?: string; content?: string; always?: boolean }) =>
+    request<MemoryEntry>(`/api/memory/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  forgetMemory: (id: string) =>
+    request<{ forgotten: string; remaining: number }>(`/api/memory/${id}`, { method: "DELETE" }),
+  memoryHistory: (id: string) => request<MemoryCommit[]>(`/api/memory/${id}/history`),
+  captureFor: (messageId: string) =>
+    request<MemoryBatch>(`/api/memory/batches/for-message/${messageId}`),
+  undoCapture: (batchId: string) =>
+    request<{ forgotten: string; remaining: number }>(`/api/memory/batches/${batchId}`, {
+      method: "DELETE",
     }),
   stopRun: (runId: string) =>
     request<{ status: string }>(`/api/chat/runs/${runId}/stop`, { method: "POST" }),

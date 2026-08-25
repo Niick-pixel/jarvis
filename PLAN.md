@@ -675,7 +675,9 @@ token half of `test_stream_interrupt.py`.
 
 ### M4 — Knowledge
 
-**Memory capture mode is still undecided.** §4.7 describes memory as browsable, editable files; it
+**Memory capture mode: settled — auto-extract with visible undo.** Facts are captured after a turn,
+written immediately, and reported in a toast that names each one and offers a single click to remove
+exactly that batch. Nothing is written unseen. Superseded discussion: §4.7 describes memory as browsable, editable files; it
 does not say whether facts are captured automatically. Three options, to settle before M4 starts:
 auto-extract with a visible "saved 2 things" marker and one-click undo (recommended); auto-extract
 into a review queue that writes nothing unseen; or explicit "remember this" only. Memory is
@@ -765,6 +767,26 @@ Four more deviations, all recorded rather than quietly taken.
    the frontend would hand-type the one part of the API rule 0.5 cares most about.
 5. **`test_stream_interrupt.py` split into two files** at the 250-line limit. Still one rule 0.7
    subject; stopping/reconnecting and steering/replaying are different responsibilities.
+
+### M4 as built (memory slice)
+
+1. **Migration 005 indexes the files; it is not the store.** `sync()` rescans `./memory/` and makes
+   the rows match. If the two ever disagree the directory wins, because memory you cannot read with
+   `cat` and delete with `rm` is not memory you own.
+2. **Retrieval is FTS5 keyword matching plus everything marked `always`,** not embeddings. That
+   needs no model resident in VRAM — which matters on an 8GB card — and is genuinely good over a
+   few hundred facts. Its limitation is real and visible: asking "how much VRAM do I have" does not
+   match a fact that says "8-12GB NVIDIA card". Vector search joins it in the RAG slice.
+3. **A stopword list was necessary.** Without it a question matched any entry sharing a filler
+   word; "with" pulled in an unrelated GPU fact during testing.
+4. **The capture task is registered before generation, not after.** An earlier version registered
+   it once `execute()` returned, which raced the `done` event the client waits on: the client could
+   ask for its batch before the entry existed and be told, wrongly, that nothing was captured.
+5. **Captured facts are deduplicated by content hash.** Facts recur across turns, so without it the
+   store fills with near-duplicates of the same preference.
+6. **Memory crosses the prompt-injection boundary like any retrieved text.** Auto-captured facts are
+   derived from model output, which a poisoned document can influence, so they are wrapped as data
+   with provenance rather than trusted as instructions. There is a test for exactly this.
 
 **One known gap.** The frontend's SSE frame parser is part of the streaming path that rule 0.7 says
 to test, but there is no frontend test runner — deliberately, since all three test subjects were
