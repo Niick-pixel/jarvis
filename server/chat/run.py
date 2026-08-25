@@ -16,7 +16,7 @@ from server.db.connection import Database
 from server.errors import NotFound, SovereignError
 from server.hardware import probe, recommend, selection
 from server.ids import now_ms
-from server.knowledge import memory_index
+from server.knowledge import memory_index, retrieval
 from server.models.context import ContextAssembly
 from server.models.params import SamplingParams
 from server.models.provider import ModelInfo
@@ -124,6 +124,7 @@ async def prepare(
             conversation_id=conversation.id,
             project_id=conversation.project_id,
         )
+        chunks = await retrieval.for_query(conn, query, settings)
         assembly = await assemble(
             conversation=conversation,
             path=path,
@@ -136,6 +137,7 @@ async def prepare(
             prefix_source_id=steering.source_id,
             nudge=request.nudge,
             memories=memories,
+            chunks=chunks,
         )
         prompt = to_prompt_messages(assembly, path)
 

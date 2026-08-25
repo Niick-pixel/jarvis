@@ -67,6 +67,15 @@ class ProvidersConfig(BaseModel):
     )
 
 
+class KnowledgeConfig(BaseModel):
+    embeddings_base_url: str = ""
+    """A loopback endpoint serving an embedding model. Empty means keyword-only retrieval, which
+    the UI states plainly rather than silently degrading."""
+    embeddings_model_id: str = "nomic-embed-text"
+    rag_results: int = 4
+    """How many chunks to inject. Each one costs context you can see in the inspector."""
+
+
 class MemoryConfig(BaseModel):
     auto_extract: bool = True
     """Capture facts automatically after a turn. Always visible, always undoable."""
@@ -100,6 +109,7 @@ class Settings(BaseSettings):
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     visual: VisualConfig = Field(default_factory=VisualConfig)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
+    knowledge: KnowledgeConfig = Field(default_factory=KnowledgeConfig)
     hardware: HardwareConfig = Field(default_factory=HardwareConfig)
     openai_api_key: str = ""
 

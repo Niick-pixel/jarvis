@@ -291,6 +291,149 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/knowledge/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open Citation
+         * @description Resolve `path#start-end` back to the file, with surrounding text for orientation.
+         */
+        get: operations["open_citation_api_knowledge_open_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/knowledge/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pause */
+        post: operations["pause_api_knowledge_pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/knowledge/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Progress */
+        get: operations["progress_api_knowledge_progress_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/knowledge/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume */
+        post: operations["resume_api_knowledge_resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/knowledge/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sources */
+        get: operations["list_sources_api_knowledge_sources_get"];
+        put?: never;
+        /** Add Source */
+        post: operations["add_source_api_knowledge_sources_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/knowledge/sources/{source_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Source */
+        delete: operations["remove_source_api_knowledge_sources__source_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/knowledge/sources/{source_id}/index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Index Source */
+        post: operations["index_source_api_knowledge_sources__source_id__index_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/knowledge/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Status
+         * @description Which retrievers are actually running, so nothing quietly degrades.
+         */
+        get: operations["status_api_knowledge_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/memory": {
         parameters: {
             query?: never;
@@ -942,6 +1085,47 @@ export interface components {
              */
             tokens_per_second: number;
         };
+        /** IndexProgress */
+        IndexProgress: {
+            /**
+             * Chunks Embedded
+             * @default 0
+             */
+            chunks_embedded: number;
+            /**
+             * Chunks Indexed
+             * @default 0
+             */
+            chunks_indexed: number;
+            /**
+             * Chunks Pending
+             * @default 0
+             */
+            chunks_pending: number;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /**
+             * Files Done
+             * @default 0
+             */
+            files_done: number;
+            /**
+             * Files Total
+             * @default 0
+             */
+            files_total: number;
+            /** Source Id */
+            source_id: string;
+            /**
+             * State
+             * @default idle
+             * @enum {string}
+             */
+            state: "idle" | "scanning" | "chunking" | "embedding" | "paused" | "done" | "error";
+        };
         /** LifetimeCounters */
         LifetimeCounters: {
             /** Cost Avoided Usd */
@@ -1285,6 +1469,23 @@ export interface components {
             /** Token Idx */
             token_idx: number;
         };
+        /** OpenedChunk */
+        OpenedChunk: {
+            /** After */
+            after: string;
+            /** Before */
+            before: string;
+            /** Byte End */
+            byte_end: number;
+            /** Byte Start */
+            byte_start: number;
+            /** Line Number */
+            line_number: number;
+            /** Path */
+            path: string;
+            /** Text */
+            text: string;
+        };
         /** PrefsUpdate */
         PrefsUpdate: {
             /** Conversation Id */
@@ -1352,6 +1553,18 @@ export interface components {
             params: {
                 [key: string]: number | string;
             };
+        };
+        /** RetrievalStatus */
+        RetrievalStatus: {
+            /** Detail */
+            detail: string;
+            /**
+             * Keyword
+             * @default true
+             */
+            keyword: boolean;
+            /** Vector */
+            vector: boolean;
         };
         /** RunEvent */
         RunEvent: {
@@ -1424,6 +1637,52 @@ export interface components {
             ids: string[];
             /** Index */
             index: number;
+        };
+        /** Source */
+        Source: {
+            /**
+             * Chunk Count
+             * @default 0
+             */
+            chunk_count: number;
+            /**
+             * Created At
+             * @default 0
+             */
+            created_at: number;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * File Count
+             * @default 0
+             */
+            file_count: number;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @default folder
+             * @enum {string}
+             */
+            kind: "folder" | "file";
+            /** Last Indexed */
+            last_indexed?: number | null;
+            /**
+             * Observer
+             * @default native
+             * @enum {string}
+             */
+            observer: "native" | "polling";
+            /** Path */
+            path: string;
+        };
+        /** SourceCreate */
+        SourceCreate: {
+            /** Path */
+            path: string;
         };
         /**
          * StreamEnvelope
@@ -2144,6 +2403,238 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HudSample"];
                     "text/event-stream": unknown;
+                };
+            };
+        };
+    };
+    open_citation_api_knowledge_open_get: {
+        parameters: {
+            query: {
+                ref: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpenedChunk"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pause_api_knowledge_pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+        };
+    };
+    progress_api_knowledge_progress_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndexProgress"][];
+                };
+            };
+        };
+    };
+    resume_api_knowledge_resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+        };
+    };
+    list_sources_api_knowledge_sources_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Source"][];
+                };
+            };
+        };
+    };
+    add_source_api_knowledge_sources_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Source"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_source_api_knowledge_sources__source_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    index_source_api_knowledge_sources__source_id__index_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndexProgress"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_knowledge_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetrievalStatus"];
                 };
             };
         };

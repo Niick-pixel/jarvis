@@ -10,6 +10,8 @@ from fastapi import Depends, Request
 
 from server.chat.live import LiveRuns
 from server.db.connection import Database
+from server.knowledge.indexer import Indexer
+from server.knowledge.watcher import Watcher
 from server.models.memory import MemoryBatch
 from server.providers.registry import ProviderRegistry
 from server.settings import Settings
@@ -21,6 +23,8 @@ class AppState:
     db: Database
     registry: ProviderRegistry
     live: LiveRuns
+    indexer: Indexer
+    watcher: Watcher
     extractions: dict[str, asyncio.Task[MemoryBatch]] = field(default_factory=dict)
     """In-flight memory extractions, keyed by the message that triggered them, so the client can
     await the one it caused instead of polling for it."""

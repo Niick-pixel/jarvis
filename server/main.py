@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from pathlib import Path as _Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -16,6 +18,7 @@ from server.api import (
     conversations,
     hardware,
     hud,
+    knowledge,
     memory,
     messages,
     models_api,
@@ -26,6 +29,9 @@ from server.db.connection import Database
 from server.db.migrate import migrate
 from server.deps import AppState, State
 from server.errors import SovereignError, handle_sovereign_error
+from server.knowledge import retrieval
+from server.knowledge.indexer import Indexer
+from server.knowledge.watcher import Watcher
 from server.providers.registry import ProviderRegistry
 from server.settings import Settings, load_settings
 
@@ -45,7 +51,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or load_settings()
     db = Database(settings.paths.db_path)
     registry = ProviderRegistry.from_settings(settings)
-    state = AppState(settings=settings, db=db, registry=registry, live=LiveRuns())
+    live = LiveRuns()
+    indexer = Indexer(db, live)
+
+    def reindex(source_id: str) -> None:
+        """A watched file changed. Reindexing goes through the same indexer, so it inherits the
+        pause switch and the rule about never competing with generation for the GPU."""
+        path = _source_path(db, source_id)
+        embedder = retrieval.embedder_for(settings)
+        asyncio.create_task(indexer.index(source_id, path, embedder))
+
+    state = AppState(
+        settings=settings,
+        db=db,
+        registry=registry,
+        live=live,
+        indexer=indexer,
+        watcher=Watcher(reindex),
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -84,12 +107,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         xray.router,
         hud.router,
         memory.router,
+        knowledge.router,
     ):
         app.include_router(router)
 
     if WEB_DIST.is_dir():
         app.mount("/", StaticFiles(directory=WEB_DIST, html=True), name="web")
     return app
+
+
+def _source_path(db: Database, source_id: str) -> _Path:
+    with db.session() as conn:
+        row = conn.execute("SELECT path FROM sources WHERE id = ?", (source_id,)).fetchone()
+    return _Path(row["path"] if row else ".")
 
 
 app = create_app()

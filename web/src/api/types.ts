@@ -49,3 +49,7 @@ export type HudSample = S["HudSample"];
 export type MemoryEntry = S["MemoryEntry"];
 export type MemoryBatch = S["MemoryBatch"];
 export type MemoryCommit = S["Commit"];
+export type Source = S["Source"];
+export type IndexProgress = S["IndexProgress"];
+export type RetrievalStatus = S["RetrievalStatus"];
+export type OpenedChunk = S["OpenedChunk"];

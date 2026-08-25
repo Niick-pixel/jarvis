@@ -8,6 +8,7 @@ import ErrorBanner from "./chat/ErrorBanner";
 import MessageList from "./chat/MessageList";
 import Minimap from "./graph/Minimap";
 import StatusBar from "./chat/StatusBar";
+import SourcesPanel from "./knowledge/SourcesPanel";
 import CaptureToast from "./memory/CaptureToast";
 import MemoryPage from "./memory/MemoryPage";
 import Background from "./scene/Background";
@@ -23,6 +24,7 @@ export default function App() {
   const setPerformanceMode = useVisual((s) => s.setPerformanceMode);
   const [sidebar, setSidebar] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
 
   useEffect(() => {
     void bootstrap().catch(() => undefined);
@@ -45,6 +47,7 @@ export default function App() {
               onPerformanceMode={setPerformanceMode}
               onToggleSidebar={() => setSidebar((open) => !open)}
               onToggleMemory={() => setMemoryOpen((open) => !open)}
+              onToggleSources={() => setSourcesOpen((open) => !open)}
             />
           </div>
           <main className="relative flex min-h-0 flex-1 flex-col">
@@ -59,6 +62,7 @@ export default function App() {
           </div>
         </div>
         <AnimatePresence>
+          {sourcesOpen && <SourcesPanel onClose={() => setSourcesOpen(false)} />}
           {memoryOpen && <MemoryPage onClose={() => setMemoryOpen(false)} />}
         </AnimatePresence>
       </div>

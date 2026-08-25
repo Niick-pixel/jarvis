@@ -43,3 +43,10 @@ kv_cache_dtype = "q8_0"         # q8_0 halves KV cost vs f16 at negligible quali
 auto_extract = true         # capture durable facts after a turn; always shown, always undoable
 min_answer_chars = 200      # skip short exchanges - a second generation is not free on a small card
 max_facts_per_turn = 3
+
+[knowledge]
+# A loopback endpoint serving an embedding model, e.g. a second llama-server on 8082 with
+# nomic-embed-text. Leave empty for keyword-only retrieval - the app says which it is using.
+embeddings_base_url = ""
+embeddings_model_id = "nomic-embed-text"
+rag_results = 4

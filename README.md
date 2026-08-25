@@ -8,7 +8,8 @@ messages and continue from your version, see exactly what went into the context 
 model's per-token uncertainty and steer it, and reproduce any answer exactly. The full spec is in
 [`BRIEF.md`](BRIEF.md); the plan of record and its milestones are in [`PLAN.md`](PLAN.md).
 
-**Status: M1–M3 complete; M4 in progress** — memory has landed, RAG over your disk is next. Working chat over SSE, the message DAG with a branching UI,
+**Status: M1–M3 complete; M4 in progress** — memory and RAG over your own disk have landed;
+reranking and private web search are what remain. Working chat over SSE, the message DAG with a branching UI,
 the interactive Context Inspector, the token x-ray with forced-token steering, live nudging,
 deterministic replay, the Sovereign HUD, and memory you can read and delete.
 
@@ -76,6 +77,14 @@ make dev
   it has actually been retrieved, and its file path; "forget" deletes the file and reindexes, rather
   than flagging a row. Every injected fact appears in the Context Inspector with its token cost, so
   you can always see which memories shaped an answer.
+- **RAG over your own disk.** Point it at folders; files are chunked with byte offsets, indexed for
+  keyword search, and embedded for vector search when you configure an embedding endpoint. Retrieval
+  fuses both with reciprocal rank fusion, and every answer's chunks appear in the Context Inspector
+  with a citation that opens the source file at the exact byte range quoted. Indexing shows progress,
+  can be paused, and yields automatically while the model is generating — on a small card an
+  embedding pass and a generation competing for the same VRAM is how you get an OOM mid-answer.
+  Folders on Windows drives are polled rather than watched, because `/mnt/c` delivers no inotify
+  events to WSL2, and the UI says which one is in use.
 - **VRAM preflight.** If a request will not fit you get a sentence and a button that fixes it, not
   an OOM stack trace.
 - **Automatic model selection.** The app ranks every model it can reach against your actual card

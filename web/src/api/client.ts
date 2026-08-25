@@ -6,6 +6,7 @@ import type {
   ErrorBody,
   HardwareReport,
   Health,
+  IndexProgress,
   LifetimeCounters,
   MemoryBatch,
   MemoryCommit,
@@ -15,9 +16,12 @@ import type {
   ModelInfo,
   ModelOption,
   ModelRecommendation,
+  OpenedChunk,
   ProviderInfo,
+  RetrievalStatus,
   SelectedModel,
   SiblingSet,
+  Source,
 } from "./types";
 
 export class ApiError extends Error {
@@ -111,6 +115,21 @@ export const api = {
     request<{ forgotten: string; remaining: number }>(`/api/memory/batches/${batchId}`, {
       method: "DELETE",
     }),
+  sources: () => request<Source[]>("/api/knowledge/sources"),
+  addSource: (path: string) =>
+    request<Source>("/api/knowledge/sources", { method: "POST", body: JSON.stringify({ path }) }),
+  removeSource: (id: string) =>
+    request<{ status: string }>(`/api/knowledge/sources/${id}`, { method: "DELETE" }),
+  indexSource: (id: string) =>
+    request<IndexProgress>(`/api/knowledge/sources/${id}/index`, { method: "POST" }),
+  indexProgress: () => request<IndexProgress[]>("/api/knowledge/progress"),
+  retrievalStatus: () => request<RetrievalStatus>("/api/knowledge/status"),
+  pauseIndexing: (paused: boolean) =>
+    request<{ paused: boolean }>(`/api/knowledge/${paused ? "pause" : "resume"}`, {
+      method: "POST",
+    }),
+  openCitation: (ref: string) =>
+    request<OpenedChunk>(`/api/knowledge/open?ref=${encodeURIComponent(ref)}`),
   stopRun: (runId: string) =>
     request<{ status: string }>(`/api/chat/runs/${runId}/stop`, { method: "POST" }),
 };

@@ -19,6 +19,7 @@ dependencies = [
     "markdown-it-py>=3.0",
     "numpy>=2.1",
     "watchdog>=6.0",
+    "pymupdf>=1.24",
 ]
 
 [project.optional-dependencies]

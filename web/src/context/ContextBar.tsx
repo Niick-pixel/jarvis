@@ -3,7 +3,8 @@
 // off entirely. Nothing leaves the context quietly - every drop is named below the bar.
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import type { ContextBlock } from "../api/types";
+import { api } from "../api/client";
+import type { ContextBlock, OpenedChunk } from "../api/types";
 import { useContextInspector } from "../store/context";
 import { useSession } from "../store/session";
 import { SPRING } from "../ui/motion";
@@ -20,6 +21,8 @@ const KIND_COLOR: Record<string, string> = {
 
 function BlockDetail({ block, onClose }: { block: ContextBlock; onClose: () => void }) {
   const { toggle, pin } = useContextInspector();
+  const [opened, setOpened] = useState<OpenedChunk | null>(null);
+  const citable = block.kind === "rag" && block.source_ref?.includes("#");
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -37,6 +40,15 @@ function BlockDetail({ block, onClose }: { block: ContextBlock; onClose: () => v
         <span>· {block.token_count} tokens</span>
         {block.eviction && <span className="text-amber-300/80">· {block.eviction}</span>}
         <div className="ml-auto flex gap-1">
+          {citable && (
+            <button
+              onClick={() => void api.openCitation(block.source_ref!).then(setOpened)}
+              className="rounded-lg px-2 py-0.5 hover:bg-white/10 hover:text-ink"
+              title="Open the source file at the exact bytes this chunk came from"
+            >
+              open source
+            </button>
+          )}
           {block.source_ref && (
             <>
               <button
@@ -59,9 +71,28 @@ function BlockDetail({ block, onClose }: { block: ContextBlock; onClose: () => v
           </button>
         </div>
       </div>
-      <pre className="scroll-thin max-h-48 overflow-auto whitespace-pre-wrap text-[12px] text-ink-muted">
-        {block.content}
-      </pre>
+      {opened ? (
+        <div>
+          <p className="mb-1 font-mono text-[10px] text-sky-200/80">
+            {opened.path}:{opened.line_number} · bytes {opened.byte_start}–{opened.byte_end}
+          </p>
+          <pre className="scroll-thin max-h-56 overflow-auto whitespace-pre-wrap text-[12px]">
+            <span className="text-ink-faint">{opened.before}</span>
+            <mark className="bg-sky-300/20 text-ink">{opened.text}</mark>
+            <span className="text-ink-faint">{opened.after}</span>
+          </pre>
+          <button
+            onClick={() => setOpened(null)}
+            className="mt-1 text-[10px] text-ink-faint underline hover:text-ink"
+          >
+            back to the chunk as sent
+          </button>
+        </div>
+      ) : (
+        <pre className="scroll-thin max-h-48 overflow-auto whitespace-pre-wrap text-[12px] text-ink-muted">
+          {block.content}
+        </pre>
+      )}
     </motion.div>
   );
 }

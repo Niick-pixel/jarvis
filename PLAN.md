@@ -788,6 +788,32 @@ Four more deviations, all recorded rather than quietly taken.
    derived from model output, which a poisoned document can influence, so they are wrapped as data
    with provenance rather than trusted as instructions. There is a test for exactly this.
 
+### M4 as built (RAG slice)
+
+1. **The vector table is created on first index, not by a migration.** sqlite-vec needs the
+   embedding dimension up front and that is a property of the model, not the schema. The dimension
+   and model id are recorded, so switching embedding model is *detected* and forces a reindex
+   rather than silently comparing vectors from two different spaces.
+2. **RRF rather than blended scores.** BM25 and cosine distance are not on the same scale, and
+   normalising them means inventing a conversion. Ranks are comparable by construction. Every hit
+   records which retrievers found it, so fusion stays inspectable.
+3. **Short sections are merged forward, never dropped.** The first chunker dropped anything under
+   the size floor, which silently made a file of brief notes unsearchable. Caught by running it on
+   a three-section document and getting one chunk back.
+4. **`context/blocks.py` was split out of the assembler** at the 250-line limit: the assembler owns
+   ordering, budget and accounting; the builders own what a block of each kind looks like.
+5. **`/api/knowledge/open` only reads files this app indexed.** It resolves `path#start-end` back
+   to bytes on disk, so it is checked against the `documents` table first - otherwise a crafted
+   reference would be an arbitrary file read.
+
+**Not done in this slice, and not pretended:**
+
+- **Reranking.** §4.8 calls for `bge-reranker` after fusion. It needs a cross-encoder resident in
+  memory, and shipping an adapter I cannot exercise here would be exactly the half-wired path rule
+  0.3 forbids. Fusion works without it; reranking is a quality improvement to add when there is a
+  model to test against.
+- **SearXNG web search and multi-step research mode.** The remaining part of M4.
+
 **One known gap.** The frontend's SSE frame parser is part of the streaming path that rule 0.7 says
 to test, but there is no frontend test runner — deliberately, since all three test subjects were
 meant to be backend logic. A CRLF bug in that parser got through to a browser and was caught by

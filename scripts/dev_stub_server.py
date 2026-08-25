@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import math
 import random
@@ -90,6 +91,28 @@ async def apply_template(request: Request) -> dict[str, str]:
     messages = (await request.json()).get("messages", [])
     rendered = "".join(f"<|{m['role']}|>\n{m['content']}\n" for m in messages)
     return {"prompt": rendered + "<|assistant|>\n"}
+
+
+@app.post("/embedding")
+async def embedding(request: Request) -> dict[str, object]:
+    """Deterministic pseudo-embeddings, so indexing and vector search can be exercised end to end.
+
+    They encode nothing semantic: a hash of the text seeds a fixed-length vector. Enough to prove
+    the plumbing - storage, dimension handling, fusion - never enough to mistake for retrieval
+    quality.
+    """
+    body = await request.json()
+    content = body.get("content", "")
+    texts = content if isinstance(content, list) else [content]
+    return {"data": [{"embedding": _fake_vector(text)} for text in texts]}
+
+
+def _fake_vector(text: str, dimension: int = 64) -> list[float]:
+    seed = int(hashlib.blake2b(text.encode(), digest_size=8).hexdigest(), 16)
+    rng = random.Random(seed)
+    raw = [rng.uniform(-1.0, 1.0) for _ in range(dimension)]
+    norm = math.sqrt(sum(v * v for v in raw)) or 1.0
+    return [v / norm for v in raw]
 
 
 @app.post("/completion", response_model=None)
