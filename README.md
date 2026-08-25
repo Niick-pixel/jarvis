@@ -8,8 +8,8 @@ messages and continue from your version, see exactly what went into the context 
 model's per-token uncertainty and steer it, and reproduce any answer exactly. The full spec is in
 [`BRIEF.md`](BRIEF.md); the plan of record and its milestones are in [`PLAN.md`](PLAN.md).
 
-**Status: M1–M3 complete; M4 in progress** — memory and RAG over your own disk have landed;
-reranking and private web search are what remain. Working chat over SSE, the message DAG with a branching UI,
+**Status: M1–M4 complete apart from reranking.** Chat, the conversation graph, the instrument
+panel, memory, RAG over your disk, and private web search. M5 is the Council and voice. Working chat over SSE, the message DAG with a branching UI,
 the interactive Context Inspector, the token x-ray with forced-token steering, live nudging,
 deterministic replay, the Sovereign HUD, and memory you can read and delete.
 
@@ -85,6 +85,12 @@ make dev
   embedding pass and a generation competing for the same VRAM is how you get an OOM mid-answer.
   Folders on Windows drives are polled rather than watched, because `/mnt/c` delivers no inotify
   events to WSL2, and the UI says which one is in use.
+- **Private web search.** `make searxng` installs SearXNG natively — no Docker — bound to loopback.
+  Research mode plans several queries, searches, notices what the snippets did not answer, and
+  searches again, then injects what it found as citable blocks carrying their URLs. Only snippets
+  are read: fetching a page would contact that site directly and undo the privacy of running your
+  own instance, so that is opt-in. Everything retrieved from the web is wrapped as data — a page
+  saying "ignore your instructions" is surfaced to you, never obeyed, and there is a test for it.
 - **VRAM preflight.** If a request will not fit you get a sentence and a button that fixes it, not
   an OOM stack trace.
 - **Automatic model selection.** The app ranks every model it can reach against your actual card

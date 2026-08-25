@@ -696,6 +696,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search */
+        get: operations["search_api_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/research": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Research
+         * @description Plan queries, search, chase what is missing, and report the whole trail.
+         */
+        post: operations["research_api_search_research_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Status
+         * @description Whether search is actually working, and if not, why - never a silent empty result set.
+         */
+        get: operations["status_api_search_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -787,6 +844,11 @@ export interface components {
             parent_id?: string | null;
             /** Rerun Of */
             rerun_of?: string | null;
+            /**
+             * Research
+             * @default false
+             */
+            research: boolean;
         };
         /** Commit */
         Commit: {
@@ -837,7 +899,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "system" | "memory" | "rag" | "pinned" | "history" | "tool" | "nudge" | "prefix";
+            kind: "system" | "memory" | "rag" | "web" | "pinned" | "history" | "tool" | "nudge" | "prefix";
             /** Label */
             label: string;
             /** Ord */
@@ -962,7 +1024,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "system" | "memory" | "rag" | "pinned" | "history" | "tool" | "nudge" | "prefix";
+            kind: "system" | "memory" | "rag" | "web" | "pinned" | "history" | "tool" | "nudge" | "prefix";
             /** Label */
             label: string;
             /**
@@ -1554,6 +1616,43 @@ export interface components {
                 [key: string]: number | string;
             };
         };
+        /** ResearchReport */
+        ResearchReport: {
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /** Question */
+            question: string;
+            /**
+             * Results
+             * @default []
+             */
+            results: components["schemas"]["SearchResult"][];
+            /**
+             * Steps
+             * @default []
+             */
+            steps: components["schemas"]["ResearchStep"][];
+        };
+        /** ResearchStep */
+        ResearchStep: {
+            /** Query */
+            query: string;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+            /**
+             * Results
+             * @default []
+             */
+            results: components["schemas"]["SearchResult"][];
+            /** Round */
+            round: number;
+        };
         /** RetrievalStatus */
         RetrievalStatus: {
             /** Detail */
@@ -1622,6 +1721,34 @@ export interface components {
              * @default 0.95
              */
             top_p: number;
+        };
+        /** SearchResult */
+        SearchResult: {
+            /**
+             * Engine
+             * @default
+             */
+            engine: string;
+            /**
+             * Snippet
+             * @default
+             */
+            snippet: string;
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+        };
+        /** SearchStatus */
+        SearchStatus: {
+            /** Base Url */
+            base_url: string;
+            /** Configured */
+            configured: boolean;
+            /** Detail */
+            detail: string;
+            /** Reachable */
+            reachable: boolean;
         };
         /** SelectedModel */
         SelectedModel: {
@@ -3121,6 +3248,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProviderInfo"][];
+                };
+            };
+        };
+    };
+    search_api_search_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResult"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    research_api_search_research_post: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_search_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchStatus"];
                 };
             };
         };

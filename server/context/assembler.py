@@ -15,6 +15,7 @@ from server.models.conversation import Conversation
 from server.models.knowledge import RetrievedChunk
 from server.models.memory import MemoryEntry
 from server.models.message import Message
+from server.models.search import SearchResult
 from server.providers.base import ModelProvider, PromptMessage
 
 RESERVED_TEMPLATE_TOKENS = 8
@@ -35,6 +36,7 @@ async def assemble(
     nudge: str | None = None,
     memories: list[MemoryEntry] | None = None,
     chunks: list[RetrievedChunk] | None = None,
+    web_results: list[SearchResult] | None = None,
 ) -> ContextAssembly:
     counter = TokenCounter(provider, model_id)
     prefs = prefs or {}
@@ -51,6 +53,11 @@ async def assemble(
     for chunk in chunks or []:
         count = await counter.count(chunk.text)
         blocks.append(build.rag(chunk, count, len(blocks)))
+
+    for result in web_results or []:
+        text = f"{result.title}\n{result.snippet}"
+        count = await counter.count(text)
+        blocks.append(build.web(result, count, len(blocks)))
 
     for message in path:
         if not message.content.strip():

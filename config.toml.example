@@ -50,3 +50,11 @@ max_facts_per_turn = 3
 embeddings_base_url = ""
 embeddings_model_id = "nomic-embed-text"
 rag_results = 4
+
+[search]
+# A SearXNG instance you run yourself, on loopback. `make searxng` installs one natively.
+# Queries never leave this machine except through SearXNG's own fan-out to upstream engines.
+base_url = ""
+max_results = 5
+research_rounds = 2         # round one searches the question; later rounds chase what is missing
+fetch_pages = false         # fetching a result contacts that site directly - off by default

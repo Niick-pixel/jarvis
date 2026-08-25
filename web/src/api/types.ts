@@ -53,3 +53,5 @@ export type Source = S["Source"];
 export type IndexProgress = S["IndexProgress"];
 export type RetrievalStatus = S["RetrievalStatus"];
 export type OpenedChunk = S["OpenedChunk"];
+export type SearchStatus = S["SearchStatus"];
+export type ResearchReport = S["ResearchReport"];

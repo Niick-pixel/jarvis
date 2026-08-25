@@ -806,13 +806,27 @@ Four more deviations, all recorded rather than quietly taken.
    to bytes on disk, so it is checked against the `documents` table first - otherwise a crafted
    reference would be an arbitrary file read.
 
-**Not done in this slice, and not pretended:**
+### M4 as built (search slice)
 
-- **Reranking.** §4.8 calls for `bge-reranker` after fusion. It needs a cross-encoder resident in
-  memory, and shipping an adapter I cannot exercise here would be exactly the half-wired path rule
-  0.3 forbids. Fusion works without it; reranking is a quality improvement to add when there is a
-  model to test against.
-- **SearXNG web search and multi-step research mode.** The remaining part of M4.
+1. **SearXNG runs native, never imported.** `make searxng` clones it into `services/searxng/` with
+   its own venv and writes a `settings.yml` that enables the JSON format (off upstream, and this
+   app needs it). Keeping it at arm's length keeps its AGPL-3.0 licence off our code, and a
+   non-loopback search URL is refused for the same reason the inference port is.
+2. **Snippets only, by default.** Fetching a result would contact that site directly and undo the
+   privacy running your own SearXNG buys. `search.fetch_pages` exists, is off, and says what it
+   costs.
+3. **Queries are deduplicated across rounds.** Models repeat themselves; without this a later round
+   re-runs earlier queries and spends itself on results already in hand. Caught by watching round
+   two search exactly what round one had.
+4. **Web results are their own block kind.** Not `rag`: the provenance and the trust boundary both
+   differ, and the open web is the least trustworthy input this app has. They reach the model
+   wrapped as data with their URL, and there is a test asserting a hostile snippet never arrives as
+   a system instruction.
+
+**Not done, and not pretended: reranking.** §4.8 calls for `bge-reranker` after fusion. It needs a
+cross-encoder resident in memory, and shipping an adapter I cannot exercise here would be exactly
+the half-wired path rule 0.3 forbids. Fusion works without it; this is a quality improvement for
+when there is a model to test against.
 
 **One known gap.** The frontend's SSE frame parser is part of the streaming path that rule 0.7 says
 to test, but there is no frontend test runner — deliberately, since all three test subjects were

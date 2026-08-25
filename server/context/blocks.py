@@ -15,6 +15,7 @@ from server.models.conversation import Conversation
 from server.models.knowledge import RetrievedChunk
 from server.models.memory import MemoryEntry
 from server.models.message import Message
+from server.models.search import SearchResult
 
 
 def preview(text: str, width: int = 48) -> str:
@@ -59,6 +60,20 @@ def rag(chunk: RetrievedChunk, tokens: int, ord: int) -> ContextBlock:
         content=chunk.text,
         token_count=tokens,
         source_ref=f"{chunk.document_path}#{chunk.byte_start}-{chunk.byte_end}",
+    )
+
+
+def web(result: SearchResult, tokens: int, ord: int) -> ContextBlock:
+    """A search snippet. source_ref is the URL, and it reaches the model as data, never as text
+    to obey - the open web is the least trustworthy input this app has."""
+    return ContextBlock(
+        id=new_id("blk"),
+        ord=ord,
+        kind="web",
+        label=f"{result.title[:60]} ({result.engine})" if result.engine else result.title[:60],
+        content=f"{result.title}\n{result.snippet}",
+        token_count=tokens,
+        source_ref=result.url,
     )
 
 

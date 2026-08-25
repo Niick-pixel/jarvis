@@ -19,6 +19,7 @@ import type {
   OpenedChunk,
   ProviderInfo,
   RetrievalStatus,
+  SearchStatus,
   SelectedModel,
   SiblingSet,
   Source,
@@ -130,6 +131,7 @@ export const api = {
     }),
   openCitation: (ref: string) =>
     request<OpenedChunk>(`/api/knowledge/open?ref=${encodeURIComponent(ref)}`),
+  searchStatus: () => request<SearchStatus>("/api/search/status"),
   stopRun: (runId: string) =>
     request<{ status: string }>(`/api/chat/runs/${runId}/stop`, { method: "POST" }),
 };

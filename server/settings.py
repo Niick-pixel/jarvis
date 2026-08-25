@@ -76,6 +76,18 @@ class KnowledgeConfig(BaseModel):
     """How many chunks to inject. Each one costs context you can see in the inspector."""
 
 
+class SearchConfig(BaseModel):
+    base_url: str = ""
+    """A SearXNG instance on loopback. `make searxng` sets one up without Docker."""
+    max_results: int = 5
+    categories: str = ""
+    research_rounds: int = 2
+    """Round one searches the question; later rounds chase what the snippets did not answer."""
+    fetch_pages: bool = False
+    """Off by default: fetching a result contacts that site directly, which undoes the privacy
+    running your own SearXNG buys you."""
+
+
 class MemoryConfig(BaseModel):
     auto_extract: bool = True
     """Capture facts automatically after a turn. Always visible, always undoable."""
@@ -110,6 +122,7 @@ class Settings(BaseSettings):
     visual: VisualConfig = Field(default_factory=VisualConfig)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     knowledge: KnowledgeConfig = Field(default_factory=KnowledgeConfig)
+    search: SearchConfig = Field(default_factory=SearchConfig)
     hardware: HardwareConfig = Field(default_factory=HardwareConfig)
     openai_api_key: str = ""
 

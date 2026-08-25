@@ -16,6 +16,7 @@ export interface ChatRequestBody {
   force_token?: { message_id: string; token_idx: number; token: string } | null;
   nudge?: string | null;
   rerun_of?: string | null;
+  research?: boolean;
   parent_id?: string | null;
   model_id?: string | null;
   params?: SamplingParams;

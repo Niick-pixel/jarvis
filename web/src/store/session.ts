@@ -26,6 +26,8 @@ interface SessionState {
   refreshTree: () => Promise<void>;
   openConversation: (id: string) => Promise<void>;
   lastPrompt: string | null;
+  research: boolean;
+  setResearch: (value: boolean) => void;
   send: (content: string, ctxLen?: number | null) => Promise<void>;
   continueFrom: (messageId: string) => Promise<void>;
   rerun: (messageId: string) => Promise<void>;
@@ -48,6 +50,9 @@ export const useSession = create<SessionState>((set, get) => ({
   error: null,
   tps: 0,
   lastPrompt: null,
+  research: false,
+
+  setResearch: (research: boolean) => set({ research }),
 
   bootstrap: async () => {
     const existing = await api.listConversations();
@@ -89,7 +94,12 @@ export const useSession = create<SessionState>((set, get) => ({
     const conversation = get().conversation;
     if (!conversation || get().runId) return;
     set({ lastPrompt: content });
-    await get().runStream({ conversation_id: conversation.id, content, ctx_len: ctxLen });
+    await get().runStream({
+      conversation_id: conversation.id,
+      content,
+      ctx_len: ctxLen,
+      research: get().research,
+    });
   },
 
   /** Continue an assistant message you edited: its text becomes the prefix (BRIEF.md 4.1). */

@@ -14,6 +14,7 @@ const KIND_COLOR: Record<string, string> = {
   history: "#8ec5ff",
   memory: "#9be7c4",
   rag: "#ffc46b",
+  web: "#7fe3c0",
   tool: "#e59bff",
   pinned: "#b79dff",
   nudge: "#ff9bb0",
@@ -71,6 +72,11 @@ function BlockDetail({ block, onClose }: { block: ContextBlock; onClose: () => v
           </button>
         </div>
       </div>
+      {block.kind === "web" && block.source_ref && (
+        <p className="mb-2 truncate font-mono text-[10px] text-emerald-200/80" title={block.source_ref}>
+          {block.source_ref} — treated as data, never as instructions
+        </p>
+      )}
       {opened ? (
         <div>
           <p className="mb-1 font-mono text-[10px] text-sky-200/80">

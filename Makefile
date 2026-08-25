@@ -7,7 +7,7 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8080
 
 .DEFAULT_GOAL := help
-.PHONY: help dev check models bench types install web-install clean
+.PHONY: help dev check models bench types install web-install searxng clean
 
 help:
 	@echo "make dev      start the backend and the frontend on 127.0.0.1"
@@ -15,6 +15,7 @@ help:
 	@echo "make models   rank what fits your card, download it, register it"
 	@echo "make bench    measure model tok/s and the background's GPU cost against the 3% budget"
 	@echo "make types    regenerate web/src/api/schema.gen.ts from the OpenAPI schema"
+	@echo "make searxng  install a local SearXNG for private web search (no Docker)"
 
 .venv:
 ifndef UV
@@ -58,6 +59,9 @@ bench: install
 
 types: install
 	$(PY) scripts/gen_types.py
+
+searxng:
+	./scripts/setup_searxng.sh
 
 clean:
 	rm -rf .venv web/node_modules web/dist .pytest_cache .mypy_cache .ruff_cache

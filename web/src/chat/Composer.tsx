@@ -8,6 +8,8 @@ export default function Composer() {
   const send = useSession((s) => s.send);
   const stop = useSession((s) => s.stop);
   const runId = useSession((s) => s.runId);
+  const research = useSession((s) => s.research);
+  const setResearch = useSession((s) => s.setResearch);
   const area = useRef<HTMLTextAreaElement>(null);
   const running = runId !== null;
 
@@ -47,6 +49,13 @@ export default function Composer() {
           placeholder={running ? "Generating - Esc stops and keeps the partial" : "Say something"}
           className="max-h-48 min-h-[2.5rem] flex-1 resize-none bg-transparent px-3 py-2 text-ink outline-none placeholder:text-ink-faint"
         />
+        <Button
+          onClick={() => setResearch(!research)}
+          variant={research ? "primary" : "ghost"}
+          title="Search the web first, in rounds, and cite what comes back. Requires a local SearXNG."
+        >
+          Research
+        </Button>
         {running ? (
           <Button variant="primary" onClick={() => void stop()} title="Esc">
             Stop
