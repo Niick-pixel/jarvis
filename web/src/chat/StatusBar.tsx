@@ -4,6 +4,7 @@ import type { ProviderInfo } from "../api/types";
 import { PRESETS, type PresetName } from "../scene/presets";
 import { useSession } from "../store/session";
 import Button from "../ui/Button";
+import Hud from "../hud/Hud";
 import ModelPicker from "./ModelPicker";
 
 interface Props {
@@ -51,6 +52,7 @@ export default function StatusBar({
       {tps > 0 && <span>{tps.toFixed(1)} tok/s</span>}
 
       <div className="ml-auto flex items-center gap-1">
+        <Hud />
         <ModelPicker />
         <span className="mx-1 h-4 w-px bg-white/10" />
         {names.map((name) => (

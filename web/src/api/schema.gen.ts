@@ -809,6 +809,24 @@ export interface components {
             /** Ram Total Mb */
             ram_total_mb: number;
         };
+        /** HudSample */
+        HudSample: {
+            /**
+             * Active Runs
+             * @default 0
+             */
+            active_runs: number;
+            gpu?: components["schemas"]["GpuInfo"] | null;
+            /** Ram Total Mb */
+            ram_total_mb: number;
+            /** Ram Used Mb */
+            ram_used_mb: number;
+            /**
+             * Tokens Per Second
+             * @default 0
+             */
+            tokens_per_second: number;
+        };
         /** LifetimeCounters */
         LifetimeCounters: {
             /** Cost Avoided Usd */
@@ -1909,13 +1927,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description An SSE stream of 1 Hz samples. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["HudSample"];
+                    "text/event-stream": unknown;
                 };
             };
         };

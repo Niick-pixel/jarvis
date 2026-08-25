@@ -1,6 +1,7 @@
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import Composer from "./chat/Composer";
+import Nudge from "./chat/Nudge";
 import ContextBar from "./context/ContextBar";
 import Conversations from "./chat/Conversations";
 import ErrorBanner from "./chat/ErrorBanner";
@@ -49,6 +50,7 @@ export default function App() {
           <div className="scrim">
             <ErrorBanner />
             <ContextBar />
+            <Nudge />
             <Composer />
           </div>
         </div>

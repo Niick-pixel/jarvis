@@ -6,7 +6,9 @@ import type {
   ErrorBody,
   HardwareReport,
   Health,
+  LifetimeCounters,
   Message,
+  MessageTokens,
   ModelInfo,
   ModelOption,
   ModelRecommendation,
@@ -84,6 +86,13 @@ export const api = {
     request<BlockPref[]>("/api/context/blocks", {
       method: "PATCH",
       body: JSON.stringify({ conversation_id: conversationId, prefs }),
+    }),
+  messageTokens: (id: string) => request<MessageTokens>(`/api/messages/${id}/tokens`),
+  hudCounters: () => request<LifetimeCounters>("/api/hud/counters"),
+  nudge: (runId: string, text: string) =>
+    request<{ message_id: string; token_idx: number }>(`/api/chat/runs/${runId}/nudge`, {
+      method: "POST",
+      body: JSON.stringify({ text }),
     }),
   stopRun: (runId: string) =>
     request<{ status: string }>(`/api/chat/runs/${runId}/stop`, { method: "POST" }),

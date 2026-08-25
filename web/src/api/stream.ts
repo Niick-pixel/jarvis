@@ -13,6 +13,9 @@ export interface ChatRequestBody {
   conversation_id: string;
   content?: string | null;
   continue_from?: string | null;
+  force_token?: { message_id: string; token_idx: number; token: string } | null;
+  nudge?: string | null;
+  rerun_of?: string | null;
   parent_id?: string | null;
   model_id?: string | null;
   params?: SamplingParams;

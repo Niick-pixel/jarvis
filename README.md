@@ -8,9 +8,9 @@ messages and continue from your version, see exactly what went into the context 
 model's per-token uncertainty and steer it, and reproduce any answer exactly. The full spec is in
 [`BRIEF.md`](BRIEF.md); the plan of record and its milestones are in [`PLAN.md`](PLAN.md).
 
-**Status: M1 and M2 are complete.** Working chat over SSE, the message DAG with a branching UI, the
-interactive Context Inspector, and the fluid mesh background with its state machine. M3 adds the
-token x-ray and live steering; memory arrives at M4.
+**Status: M1, M2 and M3 are complete.** Working chat over SSE, the message DAG with a branching UI,
+the interactive Context Inspector, the token x-ray with forced-token steering, live nudging,
+deterministic replay, and the Sovereign HUD. M4 adds knowledge: RAG over your disk, and memory.
 
 ## Requirements
 
@@ -55,6 +55,20 @@ make dev
 - **Honest capability negotiation.** A backend without logprobs hides the x-ray rather than faking
   it; a backend without a raw completion endpoint reports that live steering will not reuse the KV
   cache.
+- **Token x-ray.** Tint every token by how sure the model was — confident reads cool, uncertain
+  reads warm — then click one to see its top alternatives with their probabilities and pick a
+  different one. The message truncates there, your choice is forced, and generation carries on.
+  A backend that reports no logprobs hides the x-ray rather than showing a meaningless flat tint.
+- **Live nudging.** The nudge box stays enabled while the model is generating. Send an
+  interjection and the run stops, keeps what it wrote, and continues from there with your note in
+  context — marked inline at the token where it landed, so the transcript stays honest.
+- **Deterministic replay.** Every assistant message records its seed, sampling params, model and
+  the model file's hash. Rerun reproduces it byte for byte; rerun with different params gives you a
+  sibling and a word-level diff. That is the closest thing to a controlled experiment a chat UI has
+  offered.
+- **The Sovereign HUD.** Live VRAM, GPU load, tokens/sec, and a lifetime counter with the API spend
+  avoided — printed alongside the rate it assumes, so it is an argument you can check rather than a
+  number to believe.
 - **VRAM preflight.** If a request will not fit you get a sentence and a button that fixes it, not
   an OOM stack trace.
 - **Automatic model selection.** The app ranks every model it can reach against your actual card

@@ -749,6 +749,23 @@ Four more deviations, all recorded rather than quietly taken.
    the edited node. The edited node survives as "just my edit, no continuation", and the insert-only
    invariant holds. This is why editing then continuing leaves three siblings, not two.
 
+### M3 as built
+
+1. **`chat/steering.py` did not exist in the plan.** Continue, force-token and rerun turned out to
+   be one move with three faces — take an existing message, decide how much of its text to keep,
+   generate a sibling from there — so they share one resolver instead of three near-identical paths
+   through `run.py`.
+2. **A nudge is a context block.** It changes what the model was told, so the inspector shows it
+   with its token count rather than slipping it in invisibly.
+3. **Migration 004 rebuilds the `messages` table** to widen a CHECK constraint, which SQLite cannot
+   alter in place. The migration runner now compares row counts before and after every migration
+   and fails loudly on loss, because a botched table rebuild is silent and permanent.
+4. **`HudSample` and the SSE union are declared as OpenAPI responses** even though both are
+   delivered over `text/event-stream`. Without that they never reach the generated TypeScript, and
+   the frontend would hand-type the one part of the API rule 0.5 cares most about.
+5. **`test_stream_interrupt.py` split into two files** at the 250-line limit. Still one rule 0.7
+   subject; stopping/reconnecting and steering/replaying are different responsibilities.
+
 **One known gap.** The frontend's SSE frame parser is part of the streaming path that rule 0.7 says
 to test, but there is no frontend test runner — deliberately, since all three test subjects were
 meant to be backend logic. A CRLF bug in that parser got through to a browser and was caught by

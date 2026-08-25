@@ -40,3 +40,9 @@ export type StreamEvent =
   | UsageEvent
   | DoneEvent
   | ErrorEvent;
+export type MessageTokens = S["MessageTokens"];
+export type TokenView = S["TokenView"];
+export type Alternative = S["Alternative"];
+export type NudgeMark = S["NudgeMark"];
+export type LifetimeCounters = S["LifetimeCounters"];
+export type HudSample = S["HudSample"];

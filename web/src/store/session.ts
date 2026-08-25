@@ -27,6 +27,7 @@ interface SessionState {
   lastPrompt: string | null;
   send: (content: string, ctxLen?: number | null) => Promise<void>;
   continueFrom: (messageId: string) => Promise<void>;
+  rerun: (messageId: string) => Promise<void>;
   runStream: (body: ChatRequestBody) => Promise<void>;
   applyRemedy: (remedy: Remedy) => Promise<void>;
   stop: () => Promise<void>;
@@ -95,6 +96,13 @@ export const useSession = create<SessionState>((set, get) => ({
     const conversation = get().conversation;
     if (!conversation || get().runId) return;
     await get().runStream({ conversation_id: conversation.id, continue_from: messageId });
+  },
+
+  /** Replay a message with its own recorded seed and params, as a sibling (BRIEF.md 4.5). */
+  rerun: async (messageId: string) => {
+    const conversation = get().conversation;
+    if (!conversation || get().runId) return;
+    await get().runStream({ conversation_id: conversation.id, rerun_of: messageId });
   },
 
   runStream: async (body) => {
