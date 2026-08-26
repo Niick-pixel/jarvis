@@ -1,7 +1,8 @@
 // Every conversation ever held on this machine. They are rows in SQLite, not browser storage:
 // close the app, reboot, come back in a year - they are still there, and still yours.
 import { motion } from "framer-motion";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { api } from "../api/client";
 import { useLibrary } from "../store/library";
 import { useSession } from "../store/session";
 import Button from "../ui/Button";
@@ -19,6 +20,13 @@ export default function Conversations({ onClose }: { onClose: () => void }) {
   const { conversations, refresh, open, create, remove } = useLibrary();
   const activeId = useSession((s) => s.conversation?.id);
   const running = useSession((s) => s.runId) !== null;
+  const [exported, setExported] = useState("");
+
+  const exportOne = async (id: string) => {
+    // Composting a conversation into a note is a write, so it shows up in the audit log too.
+    const result = await api.exportConversation(id).catch(() => null);
+    setExported(result ? `Wrote ${result.path}` : "Export failed - is the vault path writable?");
+  };
 
   useEffect(() => {
     void refresh().catch(() => undefined);
@@ -44,6 +52,12 @@ export default function Conversations({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
+      {exported && (
+        <p className="mx-2 mb-1 break-all rounded-lg bg-white/6 px-2 py-1 text-[11px] text-ink-muted">
+          {exported}
+        </p>
+      )}
+
       <div className="scroll-thin flex-1 overflow-y-auto px-2 pb-3">
         {conversations.length === 0 && (
           <p className="px-2 py-3 text-[11px] text-ink-faint">Nothing saved yet.</p>
@@ -67,6 +81,13 @@ export default function Conversations({ onClose }: { onClose: () => void }) {
                 {conversation.title || "Untitled"}
               </span>
               <span className="text-[10px] text-ink-faint">{when(conversation.updated_at)}</span>
+            </button>
+            <button
+              onClick={() => void exportOne(conversation.id)}
+              className="rounded-lg px-1.5 py-1 text-[11px] text-ink-faint opacity-0 transition-opacity hover:bg-white/10 hover:text-ink group-hover:opacity-100"
+              title="Export this branch to your vault as Markdown with front-matter and wikilinks"
+            >
+              ↧
             </button>
             <button
               onClick={() => void remove(conversation.id)}

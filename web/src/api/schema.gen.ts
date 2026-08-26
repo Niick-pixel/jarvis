@@ -313,6 +313,26 @@ export interface paths {
         patch: operations["update_conversation_api_conversations__conversation_id__patch"];
         trace?: never;
     };
+    "/api/conversations/{conversation_id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export Conversation
+         * @description The branch you are on, as a Markdown note in your vault (BRIEF.md 4.11).
+         */
+        post: operations["export_conversation_api_conversations__conversation_id__export_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conversations/{conversation_id}/messages": {
         parameters: {
             query?: never;
@@ -1644,6 +1664,20 @@ export interface components {
             reason: "budget" | "summarized" | "user_disabled";
             /** Token Count */
             token_count: number;
+        };
+        /** ExportResult */
+        ExportResult: {
+            /** Bytes */
+            bytes: number;
+            /**
+             * Links
+             * @default []
+             */
+            links: string[];
+            /** Messages */
+            messages: number;
+            /** Path */
+            path: string;
         };
         /**
          * ForceToken
@@ -3576,6 +3610,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Conversation"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_conversation_api_conversations__conversation_id__export_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conversation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportResult"];
                 };
             };
             /** @description Validation Error */

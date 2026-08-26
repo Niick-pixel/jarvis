@@ -6,13 +6,16 @@ from server.db import repo
 from server.deps import State
 from server.errors import NotFound
 from server.graph import dag
+from server.knowledge import export as export_mod
 from server.models.conversation import (
     Conversation,
     ConversationCreate,
     ConversationTree,
     ConversationUpdate,
 )
+from server.models.export import ExportResult
 from server.models.message import Message, MessageCreate
+from server.tools import audit
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
@@ -27,6 +30,25 @@ def list_conversations(state: State) -> list[Conversation]:
 def create_conversation(body: ConversationCreate, state: State) -> Conversation:
     with state.db.session() as conn:
         return repo.conversations.create(conn, body)
+
+
+@router.post("/{conversation_id}/export")
+def export_conversation(conversation_id: str, state: State) -> ExportResult:
+    """The branch you are on, as a Markdown note in your vault (BRIEF.md 4.11)."""
+    with state.db.session() as conn:
+        result = export_mod.export(conn, conversation_id, state.settings.paths.vault_dir)
+        if result is None:
+            raise NotFound("Conversation")
+        # An export writes to disk, so it belongs in the same log as everything else that does.
+        audit.record(
+            conn,
+            actor="user",
+            tool="export",
+            outcome="ran",
+            target=result.path,
+            args={"conversation_id": conversation_id},
+        )
+        return result
 
 
 @router.get("/{conversation_id}")

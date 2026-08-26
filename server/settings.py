@@ -33,6 +33,8 @@ class ServerConfig(BaseModel):
 class PathsConfig(BaseModel):
     data_dir: Path = Path("./data")
     models_dir: Path = Path("./models")
+    vault_dir: Path = Path("./vault")
+    """Where exported conversations land. Point it at an Obsidian vault and they are just notes."""
     memory_dir: Path = Path("./memory")
     """Plain Markdown, in its own git repo. The files are the truth (BRIEF.md 4.7)."""
 

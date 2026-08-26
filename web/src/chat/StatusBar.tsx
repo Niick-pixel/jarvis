@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import type { ProviderInfo } from "../api/types";
 import { PRESETS, type PresetName } from "../scene/presets";
+import { useAgents } from "../store/agents";
 import { useSession } from "../store/session";
 import Button from "../ui/Button";
 import Hud from "../hud/Hud";
@@ -16,6 +17,7 @@ interface Props {
   onToggleMemory: () => void;
   onToggleSources: () => void;
   onToggleCouncil: () => void;
+  onToggleAgents: () => void;
 }
 
 export default function StatusBar({
@@ -27,9 +29,12 @@ export default function StatusBar({
   onToggleMemory,
   onToggleSources,
   onToggleCouncil,
+  onToggleAgents,
 }: Props) {
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const tps = useSession((s) => s.tps);
+  const waiting = useAgents((s) => s.pending.length);
+  const unread = useAgents((s) => s.inbox.filter((i) => !i.read_at).length);
 
   useEffect(() => {
     const load = () => void api.providers().then(setProviders).catch(() => undefined);
@@ -58,6 +63,17 @@ export default function StatusBar({
       {tps > 0 && <span>{tps.toFixed(1)} tok/s</span>}
 
       <div className="ml-auto flex items-center gap-1">
+        <Button
+          onClick={onToggleAgents}
+          variant={waiting > 0 ? "primary" : "ghost"}
+          title={
+            waiting > 0
+              ? `${waiting} tool call${waiting === 1 ? "" : "s"} waiting for you`
+              : "Scheduled jobs, their inbox, and the audit log"
+          }
+        >
+          Agents{waiting > 0 ? ` · ${waiting}!` : unread > 0 ? ` · ${unread}` : ""}
+        </Button>
         <Button onClick={onToggleCouncil} title="Ask several models the same question">
           Council
         </Button>

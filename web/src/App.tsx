@@ -1,5 +1,7 @@
 import { AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
+import AgentsPanel from "./agents/AgentsPanel";
+import Approvals from "./agents/Approvals";
 import Composer from "./chat/Composer";
 import Nudge from "./chat/Nudge";
 import ContextBar from "./context/ContextBar";
@@ -15,6 +17,7 @@ import MemoryPage from "./memory/MemoryPage";
 import Background from "./scene/Background";
 import EdgeGlow from "./scene/EdgeGlow";
 import { useSession } from "./store/session";
+import { useAgents } from "./store/agents";
 import { useVoice } from "./store/voice";
 import VoiceNotice from "./voice/VoiceNotice";
 import { useVisual } from "./store/visual";
@@ -22,6 +25,7 @@ import { useVisual } from "./store/visual";
 export default function App() {
   const bootstrap = useSession((s) => s.bootstrap);
   const refreshVoice = useVoice((s) => s.refresh);
+  const watchAgents = useAgents((s) => s.watch);
   const preset = useVisual((s) => s.preset);
   const performanceMode = useVisual((s) => s.performanceMode);
   const setPreset = useVisual((s) => s.setPreset);
@@ -30,12 +34,15 @@ export default function App() {
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [councilOpen, setCouncilOpen] = useState(false);
+  const [agentsOpen, setAgentsOpen] = useState(false);
 
   useEffect(() => {
     void bootstrap().catch(() => undefined);
     // Asked once, at boot: the answer decides whether the mic button explains itself or works.
     void refreshVoice().catch(() => undefined);
-  }, [bootstrap, refreshVoice]);
+    // Jobs fire while you are elsewhere; this is what makes an approval appear without a reload.
+    return watchAgents();
+  }, [bootstrap, refreshVoice, watchAgents]);
 
   return (
     <>
@@ -56,6 +63,7 @@ export default function App() {
               onToggleMemory={() => setMemoryOpen((open) => !open)}
               onToggleSources={() => setSourcesOpen((open) => !open)}
               onToggleCouncil={() => setCouncilOpen((open) => !open)}
+              onToggleAgents={() => setAgentsOpen((open) => !open)}
             />
           </div>
           <main className="relative flex min-h-0 flex-1 flex-col">
@@ -67,6 +75,7 @@ export default function App() {
           </main>
           <div className="scrim">
             <ErrorBanner />
+            <Approvals />
             <ContextBar />
             <Nudge />
             <VoiceNotice />
@@ -74,6 +83,7 @@ export default function App() {
           </div>
         </div>
         <AnimatePresence>
+          {agentsOpen && <AgentsPanel onClose={() => setAgentsOpen(false)} />}
           {sourcesOpen && <SourcesPanel onClose={() => setSourcesOpen(false)} />}
           {memoryOpen && <MemoryPage onClose={() => setMemoryOpen(false)} />}
         </AnimatePresence>

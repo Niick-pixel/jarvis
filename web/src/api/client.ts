@@ -1,11 +1,19 @@
 import type {
+  AuditEntry,
   BlockPref,
   ContextAssembly,
   Conversation,
+  Decision,
   ConversationTree,
   ErrorBody,
+  ExportResult,
   HardwareReport,
   Health,
+  InboxItem,
+  Job,
+  JobCreate,
+  JobPatch,
+  JobRun,
   IndexProgress,
   LifetimeCounters,
   MemoryBatch,
@@ -17,6 +25,7 @@ import type {
   ModelOption,
   ModelRecommendation,
   OpenedChunk,
+  PendingCall,
   ProviderInfo,
   RetrievalStatus,
   ScoreboardRow,
@@ -25,6 +34,8 @@ import type {
   SiblingSet,
   Source,
   SpeakRequest,
+  ToolGrant,
+  ToolInfo,
   Transcript,
   VoiceStatus,
 } from "./types";
@@ -137,6 +148,41 @@ export const api = {
     request<OpenedChunk>(`/api/knowledge/open?ref=${encodeURIComponent(ref)}`),
   searchStatus: () => request<SearchStatus>("/api/search/status"),
   scoreboard: () => request<ScoreboardRow[]>("/api/council/scoreboard"),
+  exportConversation: (conversationId: string) =>
+    request<ExportResult>(`/api/conversations/${conversationId}/export`, { method: "POST" }),
+  jobs: () => request<Job[]>("/api/agents/jobs"),
+  createJob: (body: JobCreate) =>
+    request<Job>("/api/agents/jobs", { method: "POST", body: JSON.stringify(body) }),
+  patchJob: (jobId: string, body: JobPatch) =>
+    request<Job>(`/api/agents/jobs/${jobId}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteJob: (jobId: string) =>
+    request<{ status: string }>(`/api/agents/jobs/${jobId}`, { method: "DELETE" }),
+  runJob: (jobId: string) =>
+    request<JobRun>(`/api/agents/jobs/${jobId}/run`, { method: "POST" }),
+  jobRuns: (jobId?: string) =>
+    request<JobRun[]>(`/api/agents/runs${jobId ? `?job_id=${jobId}` : ""}`),
+  runCalls: (runId: string) => request<PendingCall[]>(`/api/agents/runs/${runId}/calls`),
+  inbox: () => request<InboxItem[]>("/api/agents/inbox"),
+  markInboxRead: (itemId: string, read: boolean) =>
+    request<InboxItem>(`/api/agents/inbox/${itemId}/read`, {
+      method: "POST",
+      body: JSON.stringify({ read }),
+    }),
+  toolCatalogue: () => request<ToolInfo[]>("/api/tools"),
+  toolCalls: (onlyPending = false) =>
+    request<PendingCall[]>(`/api/tools/calls?only_pending=${onlyPending}`),
+  decideCall: (callId: string, body: Decision) =>
+    request<PendingCall>(`/api/tools/calls/${callId}`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  grants: () => request<ToolGrant[]>("/api/tools/grants"),
+  revokeGrant: (tool: string, scope: string) =>
+    request<{ status: string }>(
+      `/api/tools/grants?tool=${encodeURIComponent(tool)}&scope=${encodeURIComponent(scope)}`,
+      { method: "DELETE" },
+    ),
+  auditLog: () => request<AuditEntry[]>("/api/audit"),
   voiceStatus: () => request<VoiceStatus>("/api/voice/status"),
   transcribe: (clip: Blob) =>
     request<Transcript>("/api/voice/transcribe", {

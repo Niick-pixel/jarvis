@@ -903,6 +903,51 @@ same CSS gradient Performance mode uses. A machine that cannot give us WebGL is 
 machine and must not produce a white screen.
 
 
+### M6 as built (agents, tools, export)
+
+1. **The provenance rule is a type, not a paragraph.** `ModelToolCall` carries a private channel
+   token that only `parse_calls()` holds, and `parse_calls()` takes exactly one argument: the text
+   the model generated. Constructing one anywhere else raises. Retrieved documents reach the model
+   inside the same data envelope the assembler uses and are never handed to that parser, so a web
+   page containing a tool block has written some text, not made a call. `gate.restore()` is the one
+   other place a call is built - from its own queue row, which only `enqueue()` could have written,
+   which only accepts a parsed call. Provenance survives the trip through disk rather than being
+   re-established on the way out.
+2. **The loop is a state machine over rows, not over a task.** Each pass does one thing: run a
+   cleared call, park at the gate, hand a finished batch back, or generate. Nothing lives only in
+   the asyncio task, so killing the process mid-wait and approving afterwards finishes the run -
+   which was tested by actually killing it.
+3. **A batch is delivered whole or not at all.** Cleared calls run first, then the run parks on
+   what needs you, and results go back together. Delivered piecemeal, the model would act on half
+   of what it asked for and never learn the rest was refused.
+4. **Deny once and it stays denied for that run.** Without that rule a job that keeps asking parks
+   at the gate again every step, and a gate that nags is a gate people learn to click through.
+5. **Two records of a tool call, on purpose.** `tool_calls` holds real arguments because a call
+   approved now must run later and you cannot execute a hash. `audit_log` is written by one
+   function that hashes arguments itself and keeps only paths, hosts, outcomes and byte counts;
+   it has no parameter through which content could reach it.
+6. **The sandbox resolves before it checks.** Symlinks and `../` stop being clever once the path is
+   real. Reads are confined to the folders you already indexed plus the job's workspace; writes to
+   the workspace alone; anything that looks like a credential is refused even inside a root -
+   reading a key into a prompt is the same mistake as logging one, one step earlier.
+7. **Grants are scoped by construction.** "Always allow" resolves to a directory or a host before
+   it is stored, so there is no way to express "allow everywhere" through the UI.
+8. **Polling, not a second stream.** Approvals appear while you are looking elsewhere, so the
+   client polls three small endpoints every five seconds rather than growing another SSE stream
+   with its own reconnect story.
+9. **Export writes into the audit log too.** It touches the disk, so it belongs in the same record
+   as everything else that does, even though you asked for it yourself.
+10. **No new tests.** Rule 0.7 names three subjects; the gate's two rules are a type and a row
+    state machine, both of which were exercised end to end against the stand-in provider.
+
+**A repository bug this slice uncovered before it started.** `.gitignore` had `models/` and
+`memory/` unanchored, so they also matched `server/models/` and `web/src/memory/`. Every Pydantic
+model in the app - the single definition of every shape the frontend generates its types from - had
+been absent from the repository since M1, and `ruff` had never linted those files either, because
+it honours `.gitignore` when it walks a directory. Both are fixed and the pre-existing lint errors
+that had been hiding there are cleared.
+
+
 ---
 
 ## 8. Tests, checks, and the Makefile
