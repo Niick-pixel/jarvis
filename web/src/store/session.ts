@@ -33,6 +33,7 @@ interface SessionState {
   rerun: (messageId: string) => Promise<void>;
   runStream: (body: ChatRequestBody) => Promise<void>;
   applyRemedy: (remedy: Remedy) => Promise<void>;
+  setVisual: (visual: VisualState) => void;
   stop: () => Promise<void>;
   dismissError: () => void;
 }
@@ -196,6 +197,10 @@ export const useSession = create<SessionState>((set, get) => ({
         return;
     }
   },
+
+  /** Voice claims `listening` while the mic is open; a running generation always outranks it. */
+  setVisual: (visual: VisualState) =>
+    set((s) => (s.runId && visual !== "error" ? s : { visual })),
 
   dismissError: () => set({ error: null, visual: "idle" }),
 }));

@@ -24,6 +24,7 @@ from server.api import (
     messages,
     models_api,
     search,
+    voice,
     xray,
 )
 from server.chat.live import LiveRuns
@@ -112,6 +113,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         knowledge.router,
         search.router,
         council.router,
+        voice.router,
     ):
         app.include_router(router)
 

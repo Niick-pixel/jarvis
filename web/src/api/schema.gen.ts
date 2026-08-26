@@ -807,6 +807,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/voice/speak": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Speak */
+        post: operations["speak_api_voice_speak_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Status
+         * @description Which half of voice works, on what device, and the exact command that fixes the rest.
+         */
+        get: operations["status_api_voice_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/voice/transcribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transcribe
+         * @description The raw recording as the request body. Whatever the browser captured, PyAV decodes.
+         *
+         *     Taking bytes rather than a multipart form is not laziness: multipart would pull in another
+         *     dependency to carry one field.
+         */
+        post: operations["transcribe_api_voice_transcribe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1225,6 +1285,53 @@ export interface components {
              * @enum {string}
              */
             type: "done";
+        };
+        /** EngineStatus */
+        EngineStatus: {
+            /** Available */
+            available: boolean;
+            /**
+             * Compute Type
+             * @default
+             */
+            compute_type: string;
+            /**
+             * Device
+             * @default
+             */
+            device: string;
+            /** Engine */
+            engine: string;
+            /**
+             * Expected Path
+             * @default
+             */
+            expected_path: string;
+            /**
+             * Fix
+             * @default
+             */
+            fix: string;
+            /**
+             * Model Id
+             * @default
+             */
+            model_id: string;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "stt" | "tts";
+            /**
+             * Vram Estimate Mb
+             * @default 0
+             */
+            vram_estimate_mb: number;
         };
         /** ErrorBody */
         ErrorBody: {
@@ -2086,6 +2193,13 @@ export interface components {
             /** Path */
             path: string;
         };
+        /** SpeakRequest */
+        SpeakRequest: {
+            /** Text */
+            text: string;
+            /** Voice */
+            voice?: string | null;
+        };
         /**
          * StreamEnvelope
          * @description The `data` payload of one SSE frame.
@@ -2139,6 +2253,36 @@ export interface components {
              */
             top: components["schemas"]["Alternative"][];
         };
+        /** Transcript */
+        Transcript: {
+            /**
+             * Audio Seconds
+             * @default 0
+             */
+            audio_seconds: number;
+            /**
+             * Device
+             * @default
+             */
+            device: string;
+            /**
+             * Elapsed Ms
+             * @default 0
+             */
+            elapsed_ms: number;
+            /**
+             * Language
+             * @default
+             */
+            language: string;
+            /**
+             * Language Probability
+             * @default 0
+             */
+            language_probability: number;
+            /** Text */
+            text: string;
+        };
         /** UsageEvent */
         UsageEvent: {
             /** Gen Ms */
@@ -2178,6 +2322,16 @@ export interface components {
              */
             type: "verdict";
             verdict: components["schemas"]["CouncilVerdict"];
+        };
+        /** VoiceStatus */
+        VoiceStatus: {
+            stt: components["schemas"]["EngineStatus"];
+            tts: components["schemas"]["EngineStatus"];
+            /**
+             * Voices
+             * @default []
+             */
+            voices: string[];
         };
         /**
          * VramBudget
@@ -3699,6 +3853,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchStatus"];
+                };
+            };
+        };
+    };
+    speak_api_voice_speak_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpeakRequest"];
+            };
+        };
+        responses: {
+            /** @description A WAV stream, one PCM block per sentence. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "audio/wav": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_voice_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceStatus"];
+                };
+            };
+        };
+    };
+    transcribe_api_voice_transcribe_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Transcript"];
                 };
             };
         };

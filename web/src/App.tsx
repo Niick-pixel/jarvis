@@ -15,10 +15,13 @@ import MemoryPage from "./memory/MemoryPage";
 import Background from "./scene/Background";
 import EdgeGlow from "./scene/EdgeGlow";
 import { useSession } from "./store/session";
+import { useVoice } from "./store/voice";
+import VoiceNotice from "./voice/VoiceNotice";
 import { useVisual } from "./store/visual";
 
 export default function App() {
   const bootstrap = useSession((s) => s.bootstrap);
+  const refreshVoice = useVoice((s) => s.refresh);
   const preset = useVisual((s) => s.preset);
   const performanceMode = useVisual((s) => s.performanceMode);
   const setPreset = useVisual((s) => s.setPreset);
@@ -30,7 +33,9 @@ export default function App() {
 
   useEffect(() => {
     void bootstrap().catch(() => undefined);
-  }, [bootstrap]);
+    // Asked once, at boot: the answer decides whether the mic button explains itself or works.
+    void refreshVoice().catch(() => undefined);
+  }, [bootstrap, refreshVoice]);
 
   return (
     <>
@@ -64,6 +69,7 @@ export default function App() {
             <ErrorBanner />
             <ContextBar />
             <Nudge />
+            <VoiceNotice />
             <Composer />
           </div>
         </div>

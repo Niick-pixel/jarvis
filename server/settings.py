@@ -110,6 +110,20 @@ class MemoryConfig(BaseModel):
     max_facts_per_turn: int = 3
 
 
+class VoiceConfig(BaseModel):
+    stt_model: str = "small"
+    """Whisper size. `small` at int8 is the largest that still leaves room for an 8B model
+    next to it (PLAN.md 1.5)."""
+    stt_compute_type: Literal["int8", "int8_float16", "float16"] = "int8_float16"
+    stt_language: str = ""
+    """Empty means detect. Pinning it is faster and stops one-word clips being called Welsh."""
+    tts_voice: str = "en_US-lessac-medium"
+    tts_length_scale: float = 1.0
+    """Above 1.0 speaks slower. Piper's own knob, exposed rather than hidden."""
+    max_audio_mb: int = 25
+    """A clip larger than this is refused with a size, not silently truncated."""
+
+
 class VisualConfig(BaseModel):
     preset: Literal["aurora", "solar", "deep"] = "aurora"
     performance_mode: Literal["auto", "on", "off"] = "auto"
@@ -138,6 +152,7 @@ class Settings(BaseSettings):
     knowledge: KnowledgeConfig = Field(default_factory=KnowledgeConfig)
     search: SearchConfig = Field(default_factory=SearchConfig)
     hardware: HardwareConfig = Field(default_factory=HardwareConfig)
+    voice: VoiceConfig = Field(default_factory=VoiceConfig)
     openai_api_key: str = ""
 
     @classmethod

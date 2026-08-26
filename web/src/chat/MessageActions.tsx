@@ -2,6 +2,7 @@
 import type { Message } from "../api/types";
 import { useGraph } from "../store/graph";
 import { useSession } from "../store/session";
+import { useVoice } from "../store/voice";
 import { useXray } from "../store/xray";
 
 const BUTTON = "rounded-lg px-2 py-0.5 normal-case hover:bg-white/10 hover:text-ink";
@@ -21,6 +22,11 @@ export default function MessageActions({
   const toggleXray = useXray((s) => s.toggle);
   const xrayOn = useXray((s) => s.enabled[message.id]) ?? false;
   const assistant = message.role === "assistant";
+  const speak = useVoice((s) => s.speak);
+  const hush = useVoice((s) => s.hush);
+  const ttsReason = useVoice((s) => (s.status?.tts.available ? "" : s.status?.tts.reason ?? ""));
+  const ttsFix = useVoice((s) => s.status?.tts.fix ?? "");
+  const speaking = useVoice((s) => s.speakingId === message.id);
 
   return (
     <span className="ml-auto flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -53,6 +59,17 @@ export default function MessageActions({
             title="Tint each token by how sure the model was, and click one to change it"
           >
             x-ray
+          </button>
+          <button
+            onClick={() => {
+              if (ttsReason) useVoice.setState({ error: `${ttsReason} Fix: ${ttsFix}` });
+              else if (speaking) hush();
+              else void speak(message.id, message.content);
+            }}
+            className={`${BUTTON} ${speaking ? "bg-white/10 text-ink" : ""}`}
+            title={ttsReason || "Read this out loud, locally"}
+          >
+            {speaking ? "hush" : "speak"}
           </button>
           {message.forked_reason === "rerun" && (
             <button

@@ -70,3 +70,7 @@ export type CouncilEvent =
   | S["AgreementEvent"]
   | S["VerdictEvent"]
   | S["CouncilDoneEvent"];
+export type VoiceStatus = S["VoiceStatus"];
+export type EngineStatus = S["EngineStatus"];
+export type Transcript = S["Transcript"];
+export type SpeakRequest = S["SpeakRequest"];

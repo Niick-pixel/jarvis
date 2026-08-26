@@ -24,6 +24,9 @@ import type {
   SelectedModel,
   SiblingSet,
   Source,
+  SpeakRequest,
+  Transcript,
+  VoiceStatus,
 } from "./types";
 
 export class ApiError extends Error {
@@ -134,6 +137,32 @@ export const api = {
     request<OpenedChunk>(`/api/knowledge/open?ref=${encodeURIComponent(ref)}`),
   searchStatus: () => request<SearchStatus>("/api/search/status"),
   scoreboard: () => request<ScoreboardRow[]>("/api/council/scoreboard"),
+  voiceStatus: () => request<VoiceStatus>("/api/voice/status"),
+  transcribe: (clip: Blob) =>
+    request<Transcript>("/api/voice/transcribe", {
+      method: "POST",
+      body: clip,
+      // The recorder's own container type, whatever it chose. The server decodes it, not us.
+      headers: { "Content-Type": clip.type || "application/octet-stream" },
+    }),
   stopRun: (runId: string) =>
     request<{ status: string }>(`/api/chat/runs/${runId}/stop`, { method: "POST" }),
 };
+
+/** The one endpoint whose body is audio rather than JSON, so it needs the raw stream. */
+export async function speakStream(
+  body: SpeakRequest,
+): Promise<ReadableStream<Uint8Array<ArrayBufferLike>>> {
+  const response = await fetch("/api/voice/speak", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok || !response.body) {
+    const error = (await response.json().catch(() => null)) as ErrorBody | null;
+    throw new ApiError(
+      error ?? { code: "internal", message: `${response.status} ${response.statusText}` },
+    );
+  }
+  return response.body;
+}

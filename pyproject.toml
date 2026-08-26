@@ -23,6 +23,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# M5 (PLAN.md 6.2, 1.5): speech in and out. Optional because a text-only install has no reason to
+# carry an ONNX runtime, and because both engines refuse to run without weights you fetched.
+voice = [
+    "faster-whisper>=1.1",
+    "piper-tts>=1.2",
+]
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",

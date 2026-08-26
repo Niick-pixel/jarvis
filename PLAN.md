@@ -862,6 +862,47 @@ transcript refreshes from the database when a stream closes. `test_stream_interr
 wire format from the backend side, but that would not have caught this. Adding Vitest for that one
 pure function needs your approval under rule 0.4 — I recommend it.
 
+### M5 as built (voice slice)
+
+1. **Voice is an optional install, and the app says which half is missing.** `faster-whisper` and
+   `piper-tts` live in a `[voice]` extra, so a text-only install carries no ONNX runtime. The
+   package and the weights are two independent absences with two different fixes, and
+   `/api/voice/status` reports each as a sentence plus the one command that changes it. The mic
+   button is never a dead grey button: pressing it when speech is unavailable prints the reason.
+2. **No weights are ever fetched implicitly.** `make voice` is the only thing that downloads, and
+   when it cannot reach the registry it prints the direct URL and the exact path to drop the file
+   in - the app only ever looks at the filesystem.
+3. **"Streaming TTS" means one sentence at a time.** Piper synthesises whole utterances, so the
+   text is cut on sentence and clause ends and each block is sent as it exists. The tradeoff is a
+   WAV header written before the length is known: audio starts immediately, and the player shows
+   no duration and cannot scrub.
+4. **Playback is hand-scheduled Web Audio, not an `<audio>` element.** MediaSource does not accept
+   WAV, so an element would have to wait for the whole response. `player.ts` reads the header,
+   converts each PCM block and schedules it on a running cursor, which also gives the orb a real
+   playback level to move to.
+5. **Dictation lands in the composer, not in the conversation.** A transcript you cannot read
+   before it is sent is a transcript you cannot correct.
+6. **The orb is SVG, not a second WebGL context.** The background already owns the GPU under a 3%
+   budget (§5.6); a 26px gooey filter costs a rounding error where another canvas would not.
+7. **No new tests.** Rule 0.7 names three subjects and voice is not one of them.
+
+**What could not be verified in the environment this was built in.** The model registry is blocked
+here, so neither Whisper weights nor a Piper voice could be downloaded, and no transcription or
+synthesis has ever run. What *was* driven end to end: every unavailable path, front and back; the
+WAV framing, decoded by a real decoder and matched sample-for-sample against what was synthesised;
+a clip recorded by Chromium's own MediaRecorder, decoded through `faster-whisper`'s audio path to
+3.9s of 16kHz PCM; the mic opening, the orb moving to live mic RMS, and the transcription failure
+surfacing as a sentence; and the speak/hush round trip against a tone stand-in, with the reduced
+-motion pulse dot checked with the media query forced on. The inference step itself is the one
+thing standing untested, and it should be the first thing you exercise.
+
+**A rendering bug this slice uncovered.** Driving the UI on a box with no GPU turned up a blank
+app: three.js throws while creating the WebGL context, `Suspense` catches promises but not throws,
+and the error unmounted everything. `scene/CanvasBoundary.tsx` now catches it and falls back to the
+same CSS gradient Performance mode uses. A machine that cannot give us WebGL is not a broken
+machine and must not produce a white screen.
+
+
 ---
 
 ## 8. Tests, checks, and the Makefile
@@ -895,6 +936,7 @@ make check    # ruff, mypy, pytest, type-drift, file-length, contrast, no-phone-
 make models   # probe VRAM → ranked shortlist with real sizes → download → bench → register
 make bench    # measure background+glow GPU cost against the 3% cap (§5.6); prints pass/fail
 make types    # regenerate schema.gen.ts (make check verifies it, this writes it)
+make voice    # download the STT model and one TTS voice into ./models (nothing else fetches them)
 ```
 
 `make dev`, `make check`, `make models` are the three the brief requires; `bench` and `types` exist

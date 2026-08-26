@@ -97,6 +97,13 @@ make dev
   flatter their own family. An agreement matrix shows pairwise similarity, and a scoreboard tracks
   win rates per task category. On an 8–12GB card local models take turns rather than thrashing, and
   the UI says so.
+- **Voice, in and out, on this machine.** Hold the mic and what you said arrives in the composer
+  for you to read before you send it; press `speak` on any answer and Piper reads it back a
+  sentence at a time, starting before the last sentence is rendered. Both engines are an optional
+  install and both refuse to download anything on their own — `make voice` is the only thing that
+  fetches weights, and when it cannot reach the registry it prints the URL and the path to drop the
+  file in. When either half is missing the app says which, why, and the one command that fixes it,
+  and the orb moves to your actual microphone level rather than a canned animation.
 - **VRAM preflight.** If a request will not fit you get a sentence and a button that fixes it, not
   an OOM stack trace.
 - **Automatic model selection.** The app ranks every model it can reach against your actual card
@@ -114,6 +121,7 @@ make dev
 make check    # ruff, mypy, pytest, schema drift, file length, contrast, no-phone-home
 make bench    # model tok/s, and the background's GPU cost against the 3% budget
 make types    # regenerate the TypeScript types from the OpenAPI schema
+make voice    # download the speech models (optional; nothing else ever fetches them)
 ```
 
 `make check` enforces the rules that are easy to claim and hard to keep: TypeScript types must be
