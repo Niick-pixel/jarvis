@@ -5,6 +5,153 @@
  */
 
 export interface paths {
+    "/api/agents/inbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inbox */
+        get: operations["inbox_api_agents_inbox_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/inbox/{item_id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark Read */
+        post: operations["mark_read_api_agents_inbox__item_id__read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Jobs */
+        get: operations["list_jobs_api_agents_jobs_get"];
+        put?: never;
+        /** Create Job */
+        post: operations["create_job_api_agents_jobs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Job */
+        delete: operations["delete_job_api_agents_jobs__job_id__delete"];
+        options?: never;
+        head?: never;
+        /** Patch Job */
+        patch: operations["patch_job_api_agents_jobs__job_id__patch"];
+        trace?: never;
+    };
+    "/api/agents/jobs/{job_id}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Now
+         * @description Run it immediately. The same code path the scheduler uses, so what you test is what fires.
+         */
+        post: operations["run_now_api_agents_jobs__job_id__run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Runs */
+        get: operations["list_runs_api_agents_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agents/runs/{run_id}/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Calls
+         * @description Every tool call this run made, in order, whatever became of it.
+         */
+        get: operations["run_calls_api_agents_runs__run_id__calls_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Audit Log
+         * @description Hashes, paths and outcomes. Never arguments, never contents (BRIEF.md 7).
+         */
+        get: operations["audit_log_api_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/chat/runs/{run_id}/events": {
         parameters: {
             query?: never;
@@ -807,6 +954,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Catalogue
+         * @description The same declarations the model is shown, so the UI and the prompt cannot disagree.
+         */
+        get: operations["catalogue_api_tools_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tools/calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calls */
+        get: operations["calls_api_tools_calls_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tools/calls/{call_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decide
+         * @description Approve or deny one call, and optionally allow this tool here from now on.
+         */
+        post: operations["decide_api_tools_calls__call_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tools/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Grants */
+        get: operations["grants_api_tools_grants_get"];
+        put?: never;
+        post?: never;
+        /** Revoke */
+        delete: operations["revoke_api_tools_grants_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/voice/speak": {
         parameters: {
             query?: never;
@@ -940,6 +1162,44 @@ export interface components {
              * @enum {string}
              */
             type: "assembly";
+        };
+        /** AuditEntry */
+        AuditEntry: {
+            /** Actor */
+            actor: string;
+            /**
+             * Args Hash
+             * @default
+             */
+            args_hash: string;
+            /** At */
+            at: number;
+            /**
+             * Bytes
+             * @default 0
+             */
+            bytes: number;
+            /** Id */
+            id: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Outcome */
+            outcome: string;
+            /**
+             * Result Hash
+             * @default
+             */
+            result_hash: string;
+            /**
+             * Target
+             * @default
+             */
+            target: string;
+            /** Tool */
+            tool: string;
         };
         /** BlockPref */
         BlockPref: {
@@ -1271,6 +1531,16 @@ export interface components {
              */
             synthesis: string;
         };
+        /** Decision */
+        Decision: {
+            /** Approve */
+            approve: boolean;
+            /**
+             * Grant
+             * @default false
+             */
+            grant: boolean;
+        };
         /** DoneEvent */
         DoneEvent: {
             /** Message Id */
@@ -1487,6 +1757,26 @@ export interface components {
              */
             tokens_per_second: number;
         };
+        /** InboxItem */
+        InboxItem: {
+            /** Body */
+            body: string;
+            /** Created At */
+            created_at: number;
+            /**
+             * Flags
+             * @default []
+             */
+            flags: string[];
+            /** Id */
+            id: string;
+            /** Job Run Id */
+            job_run_id?: string | null;
+            /** Read At */
+            read_at?: number | null;
+            /** Title */
+            title: string;
+        };
         /** IndexProgress */
         IndexProgress: {
             /**
@@ -1527,6 +1817,112 @@ export interface components {
              * @enum {string}
              */
             state: "idle" | "scanning" | "chunking" | "embedding" | "paused" | "done" | "error";
+        };
+        /** Job */
+        Job: {
+            /** Created At */
+            created_at: number;
+            /** Cron */
+            cron: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Id */
+            id: string;
+            /** Last Run At */
+            last_run_at?: number | null;
+            /** Name */
+            name: string;
+            /** Next Run At */
+            next_run_at?: number | null;
+            /** Prompt */
+            prompt: string;
+            /**
+             * Tools
+             * @default []
+             */
+            tools: string[];
+            /**
+             * Workspace
+             * @default
+             */
+            workspace: string;
+        };
+        /** JobCreate */
+        JobCreate: {
+            /** Cron */
+            cron: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Name */
+            name: string;
+            /** Prompt */
+            prompt: string;
+            /**
+             * Tools
+             * @default []
+             */
+            tools: string[];
+            /**
+             * Workspace
+             * @default
+             */
+            workspace: string;
+        };
+        /** JobPatch */
+        JobPatch: {
+            /** Cron */
+            cron?: string | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Name */
+            name?: string | null;
+            /** Prompt */
+            prompt?: string | null;
+            /** Tools */
+            tools?: string[] | null;
+            /** Workspace */
+            workspace?: string | null;
+        };
+        /** JobRun */
+        JobRun: {
+            /** Conversation Id */
+            conversation_id?: string | null;
+            /**
+             * Error
+             * @default
+             */
+            error: string;
+            /** Finished At */
+            finished_at?: number | null;
+            /** Id */
+            id: string;
+            /** Job Id */
+            job_id: string;
+            /**
+             * Job Name
+             * @default
+             */
+            job_name: string;
+            /** Started At */
+            started_at: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "waiting_approval" | "done" | "failed" | "cancelled";
+            /**
+             * Steps
+             * @default 0
+             */
+            steps: number;
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
         };
         /** LifetimeCounters */
         LifetimeCounters: {
@@ -1888,6 +2284,48 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** PendingCall */
+        PendingCall: {
+            /** Args Preview */
+            args_preview: string;
+            /** Created At */
+            created_at: number;
+            /** Decided At */
+            decided_at?: number | null;
+            /**
+             * Delivered
+             * @default false
+             */
+            delivered: boolean;
+            /**
+             * Error
+             * @default
+             */
+            error: string;
+            /** Id */
+            id: string;
+            /**
+             * Job Name
+             * @default
+             */
+            job_name: string;
+            /** Job Run Id */
+            job_run_id?: string | null;
+            /**
+             * Result
+             * @default
+             */
+            result: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "denied" | "ran" | "failed";
+            /** Target */
+            target: string;
+            /** Tool */
+            tool: string;
+        };
         /** PlanEvent */
         PlanEvent: {
             /** Detail */
@@ -1966,6 +2404,14 @@ export interface components {
              * @default
              */
             reason: string;
+        };
+        /** ReadFlag */
+        ReadFlag: {
+            /**
+             * Read
+             * @default true
+             */
+            read: boolean;
         };
         /**
          * Remedy
@@ -2253,6 +2699,33 @@ export interface components {
              */
             top: components["schemas"]["Alternative"][];
         };
+        /** ToolGrant */
+        ToolGrant: {
+            /** Created At */
+            created_at: number;
+            /** Scope */
+            scope: string;
+            /** Tool */
+            tool: string;
+        };
+        /** ToolInfo */
+        ToolInfo: {
+            /** Args */
+            args: string[];
+            /** Example */
+            example: string;
+            /** Name */
+            name: string;
+            /** Side Effect */
+            side_effect: boolean;
+            /** Summary */
+            summary: string;
+            /**
+             * Target Kind
+             * @enum {string}
+             */
+            target_kind: "path" | "host" | "command" | "none";
+        };
         /** Transcript */
         Transcript: {
             /**
@@ -2378,6 +2851,318 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    inbox_api_agents_inbox_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_read_api_agents_inbox__item_id__read_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReadFlag"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_jobs_api_agents_jobs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"][];
+                };
+            };
+        };
+    };
+    create_job_api_agents_jobs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_job_api_agents_jobs__job_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_job_api_agents_jobs__job_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JobPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_now_api_agents_jobs__job_id__run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_runs_api_agents_runs_get: {
+        parameters: {
+            query?: {
+                job_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobRun"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_calls_api_agents_runs__run_id__calls_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingCall"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    audit_log_api_audit_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEntry"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     resume_run_api_chat_runs__run_id__events_get: {
         parameters: {
             query?: never;
@@ -3853,6 +4638,147 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchStatus"];
+                };
+            };
+        };
+    };
+    catalogue_api_tools_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ToolInfo"][];
+                };
+            };
+        };
+    };
+    calls_api_tools_calls_get: {
+        parameters: {
+            query?: {
+                only_pending?: boolean;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingCall"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_api_tools_calls__call_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                call_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Decision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingCall"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    grants_api_tools_grants_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ToolGrant"][];
+                };
+            };
+        };
+    };
+    revoke_api_tools_grants_delete: {
+        parameters: {
+            query: {
+                tool: string;
+                scope: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

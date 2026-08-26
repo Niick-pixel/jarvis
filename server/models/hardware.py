@@ -66,7 +66,7 @@ FitStatus = Literal["fits", "tight", "needs_offload", "unavailable"]
 class ModelOption(BaseModel):
     """A model the app can actually reach, judged against this machine."""
 
-    model: "ModelInfo"
+    model: ModelInfo
     status: FitStatus
     recommended_ctx_len: int
     reason: str

@@ -110,6 +110,18 @@ class MemoryConfig(BaseModel):
     max_facts_per_turn: int = 3
 
 
+class AgentsConfig(BaseModel):
+    workspace: Path = Path("./workspace")
+    """The default writable root for a job that does not name its own. Created on first write."""
+    max_steps: int = 6
+    """How many generate-then-call rounds one job run may take before it has to conclude."""
+    max_output_chars: int = 4000
+    """A tool result larger than this is truncated before it reaches the context, visibly."""
+    shell_timeout_s: int = 20
+    approval_timeout_minutes: int = 30
+    """How long a run waits at the gate before it gives up. It never runs the call unapproved."""
+
+
 class VoiceConfig(BaseModel):
     stt_model: str = "small"
     """Whisper size. `small` at int8 is the largest that still leaves room for an 8B model
@@ -153,6 +165,7 @@ class Settings(BaseSettings):
     search: SearchConfig = Field(default_factory=SearchConfig)
     hardware: HardwareConfig = Field(default_factory=HardwareConfig)
     voice: VoiceConfig = Field(default_factory=VoiceConfig)
+    agents: AgentsConfig = Field(default_factory=AgentsConfig)
     openai_api_key: str = ""
 
     @classmethod

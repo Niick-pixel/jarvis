@@ -20,6 +20,9 @@ dependencies = [
     "numpy>=2.1",
     "watchdog>=6.0",
     "pymupdf>=1.24",
+    # M6 (PLAN.md 6.2): cron for ambient agents. Its schedule is rebuilt from our own table,
+    # so no SQLAlchemy job store comes with it.
+    "apscheduler>=3.10",
 ]
 
 [project.optional-dependencies]

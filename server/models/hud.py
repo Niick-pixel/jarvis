@@ -21,4 +21,4 @@ class LifetimeCounters(BaseModel):
     runs_completed: float
     cost_avoided_usd: float
     rate_per_million_usd: float
-    """The assumed API price this comparison uses. Editable, and shown so it is not a magic number."""
+    """The assumed API price this comparison uses. Editable, and shown rather than magic."""

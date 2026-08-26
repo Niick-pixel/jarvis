@@ -12,7 +12,11 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from server.agents import loop as agent_loop
+from server.agents.approvals import Approvals
+from server.agents.scheduler import JobScheduler
 from server.api import (
+    agents,
     chat,
     context,
     conversations,
@@ -24,10 +28,12 @@ from server.api import (
     messages,
     models_api,
     search,
+    tools,
     voice,
     xray,
 )
 from server.chat.live import LiveRuns
+from server.db import repo
 from server.db.connection import Database
 from server.db.migrate import migrate
 from server.deps import AppState, State
@@ -64,6 +70,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         embedder = retrieval.embedder_for(settings)
         asyncio.create_task(indexer.index(source_id, path, embedder))
 
+    approvals = Approvals()
     state = AppState(
         settings=settings,
         db=db,
@@ -71,13 +78,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         live=live,
         indexer=indexer,
         watcher=Watcher(reindex),
+        approvals=approvals,
     )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         with db.session() as conn:
             app.state.migrations = migrate(conn)
-        yield
+            # A run that was mid-generation when the process died cannot be resumed: the task is
+            # gone. Say so in the row rather than leaving it looking alive forever.
+            for stale in repo.agents.stale_runs(conn):
+                repo.agents.set_status(conn, stale, "failed", error="the server restarted")
+        state.scheduler = JobScheduler(agent_loop.Runtime(db, registry, settings, live, approvals))
+        state.scheduler.start()
+        try:
+            yield
+        finally:
+            state.scheduler.shutdown()
 
     app = FastAPI(
         title="Jarvis",
@@ -114,6 +131,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         search.router,
         council.router,
         voice.router,
+        agents.router,
+        tools.router,
+        tools.audit_router,
     ):
         app.include_router(router)
 
