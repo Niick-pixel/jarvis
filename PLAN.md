@@ -828,6 +828,32 @@ cross-encoder resident in memory, and shipping an adapter I cannot exercise here
 the half-wired path rule 0.3 forbids. Fusion works without it; this is a quality improvement for
 when there is a model to test against.
 
+### M5 as built (Council slice)
+
+1. **Blindness is structural, not instructed.** `judge()` takes `(label, content)` pairs and is
+   never passed a model id, so it cannot leak a name into the prompt even by mistake. Identity is
+   re-attached afterwards, in the orchestrator, once the verdict exists. That matters because
+   judges drift toward flattering whichever model shares their family, and a judge that knows the
+   names will do it.
+2. **Local members are gated to one at a time; remote ones run free.** Three 8B models do not fit
+   in an 8-12GB card side by side. The mode and the reason are shown in the UI - a visible queue
+   beats pretending to fan out and then thrashing.
+3. **The agreement matrix is a sequential heatmap** - one hue, monotonic, never a rainbow, since
+   the quantity is magnitude. It is a real `<table>` with header cells, so the accessible view *is*
+   the chart. The printed number is never clamped even though the colour scale is: a cell should
+   show what was measured, not what the scale can paint.
+4. **The scoreboard records appearances as well as wins,** or a "win rate" just favours whichever
+   model gets asked most often.
+5. **No new tests.** Rule 0.7 names three subjects and the Council is not one of them. The property
+   most worth protecting - blindness - is enforced by a function signature instead, which is
+   stronger than a test that can be edited around.
+
+**A configuration bug this slice uncovered.** Provider defaults lived in `default_factory`
+overrides. Setting a single nested value from the environment makes pydantic-settings rebuild that
+model from the environment keys alone, discarding factory-supplied siblings - so
+`JARVIS_PROVIDERS__LMSTUDIO__BASE_URL` silently set `enabled` back to False and the provider
+vanished. Defaults now live on each provider's own class.
+
 **One known gap.** The frontend's SSE frame parser is part of the streaming path that rule 0.7 says
 to test, but there is no frontend test runner — deliberately, since all three test subjects were
 meant to be backend logic. A CRLF bug in that parser got through to a browser and was caught by

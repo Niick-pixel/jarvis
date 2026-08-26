@@ -8,6 +8,7 @@ import ErrorBanner from "./chat/ErrorBanner";
 import MessageList from "./chat/MessageList";
 import Minimap from "./graph/Minimap";
 import StatusBar from "./chat/StatusBar";
+import CouncilPanel from "./council/CouncilPanel";
 import SourcesPanel from "./knowledge/SourcesPanel";
 import CaptureToast from "./memory/CaptureToast";
 import MemoryPage from "./memory/MemoryPage";
@@ -25,6 +26,7 @@ export default function App() {
   const [sidebar, setSidebar] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [councilOpen, setCouncilOpen] = useState(false);
 
   useEffect(() => {
     void bootstrap().catch(() => undefined);
@@ -48,11 +50,15 @@ export default function App() {
               onToggleSidebar={() => setSidebar((open) => !open)}
               onToggleMemory={() => setMemoryOpen((open) => !open)}
               onToggleSources={() => setSourcesOpen((open) => !open)}
+              onToggleCouncil={() => setCouncilOpen((open) => !open)}
             />
           </div>
           <main className="relative flex min-h-0 flex-1 flex-col">
             <Minimap />
             <MessageList />
+            <AnimatePresence>
+              {councilOpen && <CouncilPanel onClose={() => setCouncilOpen(false)} />}
+            </AnimatePresence>
           </main>
           <div className="scrim">
             <ErrorBanner />

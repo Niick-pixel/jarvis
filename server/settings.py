@@ -54,17 +54,31 @@ class HttpProviderConfig(BaseModel):
     base_url: str = ""
 
 
+# Each provider carries its defaults on its own class rather than in a default_factory override.
+# That is not style: setting one nested value from the environment makes pydantic-settings rebuild
+# the model from the environment keys alone, so factory-supplied siblings are silently discarded.
+# With the defaults in the factory, setting JARVIS_PROVIDERS__LMSTUDIO__BASE_URL turned
+# `enabled` back to False and the provider quietly vanished.
+class OllamaConfig(HttpProviderConfig):
+    enabled: bool = True
+    base_url: str = "http://127.0.0.1:11434"
+
+
+class LMStudioConfig(HttpProviderConfig):
+    enabled: bool = True
+    base_url: str = "http://127.0.0.1:1234"
+
+
+class OpenAIConfig(HttpProviderConfig):
+    enabled: bool = False
+    base_url: str = "https://api.openai.com/v1"
+
+
 class ProvidersConfig(BaseModel):
     llamacpp: LlamaCppConfig = Field(default_factory=LlamaCppConfig)
-    ollama: HttpProviderConfig = Field(
-        default_factory=lambda: HttpProviderConfig(enabled=True, base_url="http://127.0.0.1:11434")
-    )
-    lmstudio: HttpProviderConfig = Field(
-        default_factory=lambda: HttpProviderConfig(enabled=True, base_url="http://127.0.0.1:1234")
-    )
-    openai: HttpProviderConfig = Field(
-        default_factory=lambda: HttpProviderConfig(base_url="https://api.openai.com/v1")
-    )
+    ollama: OllamaConfig = Field(default_factory=OllamaConfig)
+    lmstudio: LMStudioConfig = Field(default_factory=LMStudioConfig)
+    openai: OpenAIConfig = Field(default_factory=OpenAIConfig)
 
 
 class KnowledgeConfig(BaseModel):

@@ -19,6 +19,7 @@ import type {
   OpenedChunk,
   ProviderInfo,
   RetrievalStatus,
+  ScoreboardRow,
   SearchStatus,
   SelectedModel,
   SiblingSet,
@@ -132,6 +133,7 @@ export const api = {
   openCitation: (ref: string) =>
     request<OpenedChunk>(`/api/knowledge/open?ref=${encodeURIComponent(ref)}`),
   searchStatus: () => request<SearchStatus>("/api/search/status"),
+  scoreboard: () => request<ScoreboardRow[]>("/api/council/scoreboard"),
   stopRun: (runId: string) =>
     request<{ status: string }>(`/api/chat/runs/${runId}/stop`, { method: "POST" }),
 };

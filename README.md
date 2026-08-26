@@ -8,8 +8,8 @@ messages and continue from your version, see exactly what went into the context 
 model's per-token uncertainty and steer it, and reproduce any answer exactly. The full spec is in
 [`BRIEF.md`](BRIEF.md); the plan of record and its milestones are in [`PLAN.md`](PLAN.md).
 
-**Status: M1–M4 complete apart from reranking.** Chat, the conversation graph, the instrument
-panel, memory, RAG over your disk, and private web search. M5 is the Council and voice. Working chat over SSE, the message DAG with a branching UI,
+**Status: M1–M4 complete apart from reranking; M5 in progress** — the Council has landed, voice
+(STT, TTS, the orb) is what remains. Working chat over SSE, the message DAG with a branching UI,
 the interactive Context Inspector, the token x-ray with forced-token steering, live nudging,
 deterministic replay, the Sovereign HUD, and memory you can read and delete.
 
@@ -91,6 +91,12 @@ make dev
   are read: fetching a page would contact that site directly and undo the privacy of running your
   own instance, so that is opt-in. Everything retrieved from the web is wrapped as data — a page
   saying "ignore your instructions" is surfaced to you, never obeyed, and there is a test for it.
+- **The Council.** Ask several models the same question and watch them answer in parallel columns,
+  then let a judge rank them, say where they actually disagreed, and synthesise an answer. The judge
+  is blind by construction — it is handed labelled answers and never a model name, because judges
+  flatter their own family. An agreement matrix shows pairwise similarity, and a scoreboard tracks
+  win rates per task category. On an 8–12GB card local models take turns rather than thrashing, and
+  the UI says so.
 - **VRAM preflight.** If a request will not fit you get a sentence and a button that fixes it, not
   an OOM stack trace.
 - **Automatic model selection.** The app ranks every model it can reach against your actual card

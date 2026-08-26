@@ -183,6 +183,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/council/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start */
+        post: operations["start_api_council_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/council/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Run
+         * @description Read a finished council back, including who actually wrote which labelled answer.
+         */
+        get: operations["read_run_api_council_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/council/scoreboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Scoreboard */
+        get: operations["read_scoreboard_api_council_scoreboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/hardware": {
         parameters: {
             query?: never;
@@ -757,12 +811,66 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AgreementCell */
+        AgreementCell: {
+            /** A */
+            a: string;
+            /** B */
+            b: string;
+            /** Similarity */
+            similarity: number;
+        };
+        /** AgreementEvent */
+        AgreementEvent: {
+            /** Cells */
+            cells: components["schemas"]["AgreementCell"][];
+            /** Detail */
+            detail: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "agreement";
+        };
         /** Alternative */
         Alternative: {
             /** Logprob */
             logprob: number;
             /** Token */
             token: string;
+        };
+        /** AnswerDoneEvent */
+        AnswerDoneEvent: {
+            answer: components["schemas"]["CouncilAnswer"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "answer_done";
+        };
+        /** AnswerStartEvent */
+        AnswerStartEvent: {
+            /** Label */
+            label: string;
+            /** Model Id */
+            model_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "answer_start";
+        };
+        /** AnswerTokenEvent */
+        AnswerTokenEvent: {
+            /** Label */
+            label: string;
+            /** Text */
+            text: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "answer_token";
         };
         /** AssemblyEvent */
         AssemblyEvent: {
@@ -977,6 +1085,131 @@ export interface components {
             title?: string | null;
             /** Visual Preset */
             visual_preset?: ("aurora" | "solar" | "deep") | null;
+        };
+        /** CouncilAnswer */
+        CouncilAnswer: {
+            /**
+             * Content
+             * @default
+             */
+            content: string;
+            /** Error */
+            error?: string | null;
+            /**
+             * Gen Ms
+             * @default 0
+             */
+            gen_ms: number;
+            /**
+             * Gen Tokens
+             * @default 0
+             */
+            gen_tokens: number;
+            /** Label */
+            label: string;
+            /** Model Id */
+            model_id: string;
+        };
+        /** CouncilDoneEvent */
+        CouncilDoneEvent: {
+            /** Run Id */
+            run_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "council_done";
+        };
+        /**
+         * CouncilEnvelope
+         * @description Declared as a response model so every event shape reaches the generated TypeScript.
+         */
+        CouncilEnvelope: components["schemas"]["PlanEvent"] | components["schemas"]["AnswerStartEvent"] | components["schemas"]["AnswerTokenEvent"] | components["schemas"]["AnswerDoneEvent"] | components["schemas"]["AgreementEvent"] | components["schemas"]["VerdictEvent"] | components["schemas"]["CouncilDoneEvent"];
+        /** CouncilMember */
+        CouncilMember: {
+            /** Label */
+            label: string;
+            /** Model Id */
+            model_id: string;
+            /** Seed */
+            seed?: number | null;
+        };
+        /** CouncilReport */
+        CouncilReport: {
+            /**
+             * Agreement
+             * @default []
+             */
+            agreement: components["schemas"]["AgreementCell"][];
+            /**
+             * Agreement Detail
+             * @default
+             */
+            agreement_detail: string;
+            /**
+             * Answers
+             * @default []
+             */
+            answers: components["schemas"]["CouncilAnswer"][];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "sequential" | "mixed";
+            /** Question */
+            question: string;
+            /** Run Id */
+            run_id: string;
+            verdict?: components["schemas"]["CouncilVerdict"] | null;
+        };
+        /** CouncilRequest */
+        CouncilRequest: {
+            /**
+             * Category
+             * @default general
+             */
+            category: string;
+            /** Conversation Id */
+            conversation_id?: string | null;
+            /** Judge Model Id */
+            judge_model_id?: string | null;
+            /**
+             * Model Ids
+             * @default []
+             */
+            model_ids: string[];
+            /** Question */
+            question: string;
+            /**
+             * Rubric
+             * @default
+             */
+            rubric: string;
+        };
+        /** CouncilVerdict */
+        CouncilVerdict: {
+            /**
+             * Blind
+             * @default true
+             */
+            blind: boolean;
+            /**
+             * Disagreements
+             * @default
+             */
+            disagreements: string;
+            /** Judge Model Id */
+            judge_model_id?: string | null;
+            /**
+             * Ranking
+             * @default []
+             */
+            ranking: components["schemas"]["Ranking"][];
+            /**
+             * Synthesis
+             * @default
+             */
+            synthesis: string;
         };
         /** DoneEvent */
         DoneEvent: {
@@ -1548,6 +1781,25 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** PlanEvent */
+        PlanEvent: {
+            /** Detail */
+            detail: string;
+            /** Members */
+            members: components["schemas"]["CouncilMember"][];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "sequential" | "mixed";
+            /** Run Id */
+            run_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "plan";
+        };
         /** PrefsUpdate */
         PrefsUpdate: {
             /** Conversation Id */
@@ -1595,6 +1847,18 @@ export interface components {
             name: string;
             /** Online */
             online: boolean;
+        };
+        /** Ranking */
+        Ranking: {
+            /** Label */
+            label: string;
+            /** Rank */
+            rank: number;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
         };
         /**
          * Remedy
@@ -1721,6 +1985,17 @@ export interface components {
              * @default 0.95
              */
             top_p: number;
+        };
+        /** ScoreboardRow */
+        ScoreboardRow: {
+            /** Appearances */
+            appearances: number;
+            /** Category */
+            category: string;
+            /** Model Id */
+            model_id: string;
+            /** Wins */
+            wins: number;
         };
         /** SearchResult */
         SearchResult: {
@@ -1894,6 +2169,15 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** VerdictEvent */
+        VerdictEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "verdict";
+            verdict: components["schemas"]["CouncilVerdict"];
         };
         /**
          * VramBudget
@@ -2397,6 +2681,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_api_council_run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CouncilRequest"];
+            };
+        };
+        responses: {
+            /** @description An SSE stream. Each frame's `data` is one CouncilEnvelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CouncilEnvelope"];
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_run_api_council_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CouncilReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_scoreboard_api_council_scoreboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScoreboardRow"][];
                 };
             };
         };

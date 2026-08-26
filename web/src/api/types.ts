@@ -55,3 +55,18 @@ export type RetrievalStatus = S["RetrievalStatus"];
 export type OpenedChunk = S["OpenedChunk"];
 export type SearchStatus = S["SearchStatus"];
 export type ResearchReport = S["ResearchReport"];
+export type CouncilMember = S["CouncilMember"];
+export type CouncilAnswer = S["CouncilAnswer"];
+export type AgreementCell = S["AgreementCell"];
+export type CouncilVerdict = S["CouncilVerdict"];
+export type ScoreboardRow = S["ScoreboardRow"];
+export type CouncilReport = S["CouncilReport"];
+export type PlanEvent = S["PlanEvent"];
+export type CouncilEvent =
+  | PlanEvent
+  | S["AnswerStartEvent"]
+  | S["AnswerTokenEvent"]
+  | S["AnswerDoneEvent"]
+  | S["AgreementEvent"]
+  | S["VerdictEvent"]
+  | S["CouncilDoneEvent"];

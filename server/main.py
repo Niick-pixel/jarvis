@@ -16,6 +16,7 @@ from server.api import (
     chat,
     context,
     conversations,
+    council,
     hardware,
     hud,
     knowledge,
@@ -110,6 +111,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         memory.router,
         knowledge.router,
         search.router,
+        council.router,
     ):
         app.include_router(router)
 

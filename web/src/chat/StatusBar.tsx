@@ -15,6 +15,7 @@ interface Props {
   onToggleSidebar: () => void;
   onToggleMemory: () => void;
   onToggleSources: () => void;
+  onToggleCouncil: () => void;
 }
 
 export default function StatusBar({
@@ -25,6 +26,7 @@ export default function StatusBar({
   onToggleSidebar,
   onToggleMemory,
   onToggleSources,
+  onToggleCouncil,
 }: Props) {
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const tps = useSession((s) => s.tps);
@@ -56,6 +58,9 @@ export default function StatusBar({
       {tps > 0 && <span>{tps.toFixed(1)} tok/s</span>}
 
       <div className="ml-auto flex items-center gap-1">
+        <Button onClick={onToggleCouncil} title="Ask several models the same question">
+          Council
+        </Button>
         <Button onClick={onToggleSources} title="Folders indexed for retrieval">
           Knowledge
         </Button>

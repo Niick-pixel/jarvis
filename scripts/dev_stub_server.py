@@ -15,53 +15,13 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import hashlib
 import json
 import math
 import random
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-
-WORDS = [
-    "the",
-    "local",
-    "model",
-    "runs",
-    "on",
-    "your",
-    "own",
-    "hardware",
-    "which",
-    "means",
-    "every",
-    "token",
-    "you",
-    "generate",
-    "is",
-    "yours",
-    "and",
-    "nothing",
-    "leaves",
-    "this",
-    "machine",
-    "you",
-    "can",
-    "edit",
-    "what",
-    "i",
-    "just",
-    "said",
-    "fork",
-    "the",
-    "conversation",
-    "and",
-    "continue",
-    "from",
-    "your",
-    "own",
-    "version",
-]
+from stub_content import WORDS, fake_vector, lines_for, shuffled_words
 
 app = FastAPI(title="llama.cpp stand-in (development only)")
 
@@ -91,6 +51,46 @@ async def apply_template(request: Request) -> dict[str, str]:
     messages = (await request.json()).get("messages", [])
     rendered = "".join(f"<|{m['role']}|>\n{m['content']}\n" for m in messages)
     return {"prompt": rendered + "<|assistant|>\n"}
+
+
+# An OpenAI-compatible surface too, so one stand-in can present several distinct models. That is
+# what makes multi-model flows - the Council above all - testable without three real models.
+STUB_MODELS = ["stub-alpha-8b", "stub-beta-12b", "stub-gamma-7b"]
+
+
+@app.get("/v1/models")
+async def list_models() -> dict[str, object]:
+    return {
+        "data": [
+            {"id": name, "object": "model", "max_context_length": 8192} for name in STUB_MODELS
+        ]
+    }
+
+
+@app.post("/v1/chat/completions", response_model=None)
+async def chat_completions(request: Request) -> StreamingResponse | JSONResponse:
+    body = await request.json()
+    if not body.get("stream"):
+        return JSONResponse({"error": "this stand-in only implements the streaming path"}, 400)
+    model = str(body.get("model") or "stub")
+    prompt = "\n".join(str(m.get("content", "")) for m in body.get("messages", []))
+    seed = int(body.get("seed") or 0)
+    scripted = lines_for(prompt)
+    # Distinct models must read as distinct, or an agreement matrix over them proves nothing.
+    rng = random.Random(seed + sum(map(ord, model)))
+    delay = 0.02
+
+    async def stream() -> asyncio.AsyncIterator[bytes]:
+        pieces = scripted if scripted is not None else shuffled_words(rng)
+        for piece in pieces:
+            await asyncio.sleep(delay)
+            chunk = {"choices": [{"delta": {"content": piece}, "index": 0}]}
+            yield f"data: {json.dumps(chunk)}\n\n".encode()
+        done = {"choices": [{"delta": {}, "finish_reason": "stop", "index": 0}]}
+        yield f"data: {json.dumps(done)}\n\n".encode()
+        yield b"data: [DONE]\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
 
 
 @app.get("/search")
@@ -130,31 +130,7 @@ async def embedding(request: Request) -> dict[str, object]:
     body = await request.json()
     content = body.get("content", "")
     texts = content if isinstance(content, list) else [content]
-    return {"data": [{"embedding": _fake_vector(text)} for text in texts]}
-
-
-def _lines_for(prompt: str) -> list[str] | None:
-    """Synthetic line-delimited replies for the two prompts that require that shape."""
-    if "One query per line" in prompt:
-        return [
-            "vram budget local llm\n",
-            "kv cache size 32k context\n",
-            "gguf quantisation sizes\n",
-        ]
-    if "One fact per line" in prompt:
-        return [
-            "The user runs an 8GB NVIDIA card under WSL2.\n",
-            "The user prefers short answers.\n",
-        ]
-    return None
-
-
-def _fake_vector(text: str, dimension: int = 64) -> list[float]:
-    seed = int(hashlib.blake2b(text.encode(), digest_size=8).hexdigest(), 16)
-    rng = random.Random(seed)
-    raw = [rng.uniform(-1.0, 1.0) for _ in range(dimension)]
-    norm = math.sqrt(sum(v * v for v in raw)) or 1.0
-    return [v / norm for v in raw]
+    return {"data": [{"embedding": fake_vector(text)} for text in texts]}
 
 
 @app.post("/completion", response_model=None)
@@ -172,7 +148,7 @@ async def completion(request: Request) -> StreamingResponse | JSONResponse:
     # Prompts asking for line-delimited output get line-delimited output. Without this the
     # stand-in cannot exercise query planning or memory extraction at all: they would always see
     # one long paragraph and correctly reject it.
-    scripted = _lines_for(prompt)
+    scripted = lines_for(prompt)
 
     async def stream() -> asyncio.AsyncIterator[bytes]:
         if scripted is not None:
@@ -182,19 +158,23 @@ async def completion(request: Request) -> StreamingResponse | JSONResponse:
             final = {"content": "", "stop": True, "stop_type": "eos"}
             yield f"data: {json.dumps(final)}\n\n".encode()
             return
-        count = min(n_predict, len(WORDS))
+        # Seeded shuffling, so two council members with different seeds differ - otherwise the
+        # agreement matrix would be a wall of 1.0 and prove nothing.
+        words = list(WORDS)
+        rng.shuffle(words)
+        count = min(n_predict, len(words))
         for index in range(count):
             await asyncio.sleep(delay)
-            chunk: dict[str, object] = {"content": WORDS[index] + " ", "stop": False}
+            chunk: dict[str, object] = {"content": words[index] + " ", "stop": False}
             if n_probs:
                 confidence = 0.55 + 0.4 * abs(math.sin(index * 1.7))
                 chunk["completion_probabilities"] = [
                     {
-                        "content": WORDS[index],
+                        "content": words[index],
                         "probs": [
-                            {"tok_str": WORDS[index], "prob": confidence},
+                            {"tok_str": words[index], "prob": confidence},
                             *[
-                                {"tok_str": rng.choice(WORDS), "prob": (1 - confidence) / 4}
+                                {"tok_str": rng.choice(words), "prob": (1 - confidence) / 4}
                                 for _ in range(min(n_probs - 1, 4))
                             ],
                         ],
