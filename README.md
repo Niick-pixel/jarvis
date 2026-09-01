@@ -133,7 +133,7 @@ make dev
 ## Development
 
 ```bash
-make check    # ruff, mypy, pytest, schema drift, file length, contrast, no-phone-home
+make check    # ruff, mypy, pytest, vitest, schema drift, file length, contrast, no-phone-home
 make bench    # model tok/s, and the background's GPU cost against the 3% budget
 make types    # regenerate the TypeScript types from the OpenAPI schema
 make voice    # download the speech models (optional; nothing else ever fetches them)

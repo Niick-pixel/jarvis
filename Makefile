@@ -46,6 +46,7 @@ check: install
 	.venv/bin/ruff check server scripts tests
 	.venv/bin/mypy
 	$(PY) -m pytest -q
+	cd web && npm run test
 	$(PY) scripts/gen_types.py --check
 	cd web && npx tsc -b --noEmit
 	cd web && npm run build

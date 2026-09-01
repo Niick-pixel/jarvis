@@ -613,11 +613,11 @@ Apache-2.0) except the two separate-process services noted at the end.
 | `d3-hierarchy` | Tree layout math for the minimap; we render the SVG ourselves. |
 | `diff` | Word-level diff for "rerun with…" sibling comparison (§4.5). |
 | `openapi-typescript` (dev) | Generates `schema.gen.ts` from OpenAPI — the other half of rule 0.5. |
+| `vitest` (dev) | The frame parser in `api/stream.ts` is part of rule 0.7's third subject and lives on this side of the wire. Added at M6, after it shipped a bug nothing else could catch — see the note below. |
 
 **Deliberately not included:** no component library, no `axios` (fetch is enough), no charting
-library (the HUD and the agreement heatmap are small bespoke SVG), **no frontend test runner** —
-rule 0.7 names three test subjects and all three live in the backend, so adding Vitest would be
-adding a dependency to test things the brief told me not to test.
+library (the HUD and the agreement heatmap are small bespoke SVG), and no React testing library —
+`vitest` is here for one pure function, not to start testing components rule 0.7 says not to test.
 
 **Separate processes, not imports:** `llama.cpp` (MIT, built from source in WSL2 with
 `-DGGML_CUDA=ON`) and `SearXNG` (AGPL-3.0, M4, its own venv). Neither is linked into our code, so the
@@ -854,13 +854,15 @@ model from the environment keys alone, discarding factory-supplied siblings - so
 `JARVIS_PROVIDERS__LMSTUDIO__BASE_URL` silently set `enabled` back to False and the provider
 vanished. Defaults now live on each provider's own class.
 
-**One known gap.** The frontend's SSE frame parser is part of the streaming path that rule 0.7 says
-to test, but there is no frontend test runner — deliberately, since all three test subjects were
-meant to be backend logic. A CRLF bug in that parser got through to a browser and was caught by
-hand: every live event silently failed to parse while the app still looked correct, because the
-transcript refreshes from the database when a stream closes. `test_stream_interrupt.py` now pins the
-wire format from the backend side, but that would not have caught this. Adding Vitest for that one
-pure function needs your approval under rule 0.4 — I recommend it.
+**One known gap, now closed.** The frontend's SSE frame parser is part of the streaming path that
+rule 0.7 names, but it had no test runner — all three subjects were meant to be backend logic. A
+CRLF bug in that parser got through to a browser and was caught by hand: every live event silently
+failed to parse while the app still looked correct, because the transcript refreshes from the
+database when a stream closes. `test_stream_interrupt.py` pins the wire format from the backend
+side, and that would not have caught it. With your approval under rule 0.4, `vitest` now covers
+that one function - and the suite was mutation-checked: reintroducing the `"\n\n"` split fails six
+of its seven tests, and dropping the id, the held-back tail, or the multi-line join each fail their
+own.
 
 ### M5 as built (voice slice)
 
@@ -958,6 +960,7 @@ that had been hiding there are cleared.
 |---|---|
 | `tests/test_dag.py` | fork-on-edit creates a sibling and destroys nothing; `path_to_leaf` is the reversed ancestor chain; sibling ordering is stable; deep chains don't recurse to death; merge records provenance and keeps the tree acyclic. |
 | `tests/test_context_accounting.py` | assembled token total equals the provider's own count of the final prompt (the bug that otherwise silently truncates); pinned blocks survive eviction and unpinned ones don't; every eviction emits a notice; toggling and reordering change the total in the expected direction. |
+| `web/src/api/stream.test.ts` | the client's half of the same subject: frames split on CRLF as well as LF, an id survives (or resume cannot work), an incomplete frame is held back, and every token is emitted exactly once across an arbitrary chunk boundary — checked at every possible split point. Fixtures are bytes captured from a running server. |
 | `tests/test_stream_interrupt.py` | stop keeps the partial and marks `stop_reason`; reconnect with `Last-Event-ID` replays exactly the missing tokens with no duplicates or gaps; a nudge aborts, persists the partial, and resumes with the partial as prefix; forced-token truncates at the byte offset and continues; a provider dying mid-stream leaves a `stopped` row, never a half-written one. |
 
 All three run against a **fake provider with a scripted token stream** (`tests/conftest.py`) — no
@@ -965,7 +968,7 @@ model, no GPU, so `make check` is fast and runs in CI on this repo's existing ru
 
 ### 8.2 `make check` also enforces the non-code requirements
 
-- `ruff` + `mypy` + `pytest`.
+- `ruff` + `mypy` + `pytest` + `vitest` (one file, see 8.1).
 - **Type drift:** regenerate `schema.gen.ts` from OpenAPI; fail if it differs (rule 0.5).
 - **File length:** fail on any source file over 250 lines (rule 0.6) — a lint rule, not a habit.
 - **Contrast:** `scripts/contrast_check.py` renders the shader's extreme frames headless and asserts
@@ -977,7 +980,7 @@ model, no GPU, so `make check` is fast and runs in CI on this repo's existing ru
 
 ```
 make dev      # migrate → start llama.cpp (if configured) → uvicorn on 127.0.0.1:8080 → vite
-make check    # ruff, mypy, pytest, type-drift, file-length, contrast, no-phone-home
+make check    # ruff, mypy, pytest, vitest, type-drift, file-length, contrast, no-phone-home
 make models   # probe VRAM → ranked shortlist with real sizes → download → bench → register
 make bench    # measure background+glow GPU cost against the 3% cap (§5.6); prints pass/fail
 make types    # regenerate schema.gen.ts (make check verifies it, this writes it)
