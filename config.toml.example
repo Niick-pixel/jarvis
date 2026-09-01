@@ -9,14 +9,12 @@ auth_token = ""             # Only needed if you change host away from loopback.
 data_dir = "./data"         # jarvis.db lives here
 models_dir = "./models"     # downloaded GGUF files
 memory_dir = "./memory"     # your memory, as Markdown in a git repo you can read and edit
+vault_dir = "./vault"       # exported conversations land here; point it at an Obsidian vault
 
 [providers.llamacpp]
+# You start llama-server yourself; `make models` prints the exact command for the model you pick.
 enabled = true
 base_url = "http://127.0.0.1:8081"
-# Started for you by `make dev` when autostart = true and model_path is set.
-autostart = false
-model_path = ""
-ctx_len = 0                 # 0 = pick the largest context your VRAM budget allows
 
 [providers.ollama]
 enabled = true
@@ -49,7 +47,16 @@ max_facts_per_turn = 3
 # nomic-embed-text. Leave empty for keyword-only retrieval - the app says which it is using.
 embeddings_base_url = ""
 embeddings_model_id = "nomic-embed-text"
-rag_results = 4
+rag_results = 4             # how many chunks reach the context window
+
+# A third llama-server, started with --reranking and a cross-encoder GGUF. A cross-encoder reads
+# your question and each candidate together, which is what fixes "right file, wrong paragraph".
+# It is another model resident on the same card: bge-reranker-v2-m3 at Q8 is about 600MB.
+# Empty means the fused order is final, and the Knowledge panel says which you are getting.
+rerank_base_url = ""
+rerank_model_id = "bge-reranker-v2-m3"
+rerank_candidates = 20      # fused hits the reranker reads before the top rag_results are kept
+rerank_timeout_s = 20.0     # past this, fused order stands rather than the answer waiting
 
 [search]
 # A SearXNG instance you run yourself, on loopback. `make searxng` installs one natively.
@@ -58,3 +65,21 @@ base_url = ""
 max_results = 5
 research_rounds = 2         # round one searches the question; later rounds chase what is missing
 fetch_pages = false         # fetching a result contacts that site directly - off by default
+
+[voice]
+# Optional extra: `make voice-install` installs the engines, `make voice` downloads the weights.
+# Nothing else ever fetches them, and the app says which half is missing and why.
+stt_model = "small"             # tiny | base | small | medium | large-v3; small ~440MB on CUDA
+stt_compute_type = "int8_float16"
+stt_language = ""               # empty detects; pinning it is faster and steadier on short clips
+tts_voice = "en_US-lessac-medium"
+tts_length_scale = 1.0          # above 1.0 speaks slower
+max_audio_mb = 25
+
+[agents]
+# Scheduled jobs. Every side effect stops at an approval gate until you allow it, per directory.
+workspace = "./workspace"       # default writable root for a job that does not name its own
+max_steps = 6                   # generate-then-call rounds before a run has to conclude
+max_output_chars = 4000         # a tool result larger than this is truncated, visibly
+shell_timeout_s = 20
+approval_timeout_minutes = 30   # how long a parked run waits before giving up. It never runs it.

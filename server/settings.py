@@ -46,9 +46,9 @@ class PathsConfig(BaseModel):
 class LlamaCppConfig(BaseModel):
     enabled: bool = True
     base_url: str = "http://127.0.0.1:8081"
-    autostart: bool = False
-    model_path: str = ""
-    ctx_len: int = 0
+    # There is deliberately no `autostart` here. It was declared through M1-M6 and never
+    # implemented, which made config.toml.example promise something that did not happen. You start
+    # llama-server yourself; `make models` prints the exact command for the model you picked.
 
 
 class HttpProviderConfig(BaseModel):

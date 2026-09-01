@@ -8,36 +8,144 @@ messages and continue from your version, see exactly what went into the context 
 model's per-token uncertainty and steer it, and reproduce any answer exactly. The full spec is in
 [`BRIEF.md`](BRIEF.md); the plan of record and its milestones are in [`PLAN.md`](PLAN.md).
 
-**Status: M1–M4 complete apart from reranking; M5 in progress** — the Council has landed, voice
-(STT, TTS, the orb) is what remains. Working chat over SSE, the message DAG with a branching UI,
-the interactive Context Inspector, the token x-ray with forced-token steering, live nudging,
-deterministic replay, the Sovereign HUD, and memory you can read and delete.
+**Status: M1–M6 complete.** Chat over SSE with a branching message DAG, the interactive Context
+Inspector, the token x-ray with forced-token steering, live nudging, deterministic replay, the
+Sovereign HUD, memory as files you own, RAG with reranking, private web search, the Council, voice
+in and out, and scheduled agents behind an approval gate. What is listed below is built; what is
+not built is not listed.
 
-## Requirements
+## Quickstart on a fresh machine
 
-- Python 3.12 and [uv](https://docs.astral.sh/uv/), Node 20+
-- A backend: llama.cpp (recommended), Ollama, LM Studio, or any OpenAI-compatible endpoint
-- An NVIDIA GPU helps, but the app starts, explains what it can run, and works without one
+Written for the machine this was built for: Windows 11, WSL2, and an 8–12GB NVIDIA card. On native
+Linux, skip step 1. Without a GPU every step still works — drop `-ngl` in step 6 and pick a smaller
+model in step 5; generation will be slow but nothing is disabled for it. Budget 30–40 minutes, most
+of it the CUDA build and the model download.
 
-## Getting started
+### 1. WSL2, with the card visible inside it
 
-```bash
-make models   # reads your card, ranks what fits, downloads it, registers it
-make dev      # backend on 127.0.0.1:8080, frontend on 127.0.0.1:5173
+In PowerShell as administrator:
+
+```powershell
+wsl --install -d Ubuntu-24.04
 ```
 
-`make models` prints the arithmetic rather than a recommendation you have to trust: weights, KV
-cache at each context length, compute buffers, and the VRAM your browser's GPU process takes —
-because on an 8-12GB card the browser and the model share the same card.
-
-To try the interface before downloading several gigabytes of weights:
+Install the NVIDIA driver **on Windows**, not inside WSL. The Windows driver already exposes the
+GPU to WSL2; installing a Linux driver in the distro is the usual way to break it. Then, inside
+Ubuntu:
 
 ```bash
-python scripts/dev_stub_server.py --port 8081   # speaks llama.cpp's protocol; generates nothing real
+nvidia-smi        # must print your card. If it does not, stop here - nothing below will use the GPU.
+```
+
+Keep this repo on the WSL side (`~/jarvis`), not under `/mnt/c`. Windows drives are reachable but
+slow, and they deliver no inotify events, which the file watcher has to fall back to polling for.
+
+### 2. Toolchain
+
+```bash
+sudo apt update && sudo apt install -y build-essential cmake git python3.12 python3.12-venv curl
+curl -LsSf https://astral.sh/uv/install.sh | sh          # uv, for the Python env
+sudo apt install -y nodejs npm                          # Ubuntu 24.04 ships Node 18, which is enough
+```
+
+The CUDA toolkit comes with the WSL CUDA package if `nvcc --version` is missing:
+`sudo apt install -y nvidia-cuda-toolkit`.
+
+### 3. llama.cpp, built with CUDA
+
+```bash
+git clone https://github.com/ggml-org/llama.cpp ~/llama.cpp && cd ~/llama.cpp
+cmake -B build -DGGML_CUDA=ON && cmake --build build --config Release -j
+export PATH="$HOME/llama.cpp/build/bin:$PATH"     # add this to ~/.bashrc
+llama-server --version
+```
+
+Ollama or LM Studio work too and need none of this — the app discovers whatever is listening. You
+lose the token x-ray with them: it needs per-token logprobs, and the app hides the feature rather
+than faking it.
+
+### 4. The app
+
+```bash
+git clone https://github.com/Niick-pixel/jarvis ~/jarvis && cd ~/jarvis
+cp config.toml.example config.toml       # every value is also settable as JARVIS_* in the env
+make install                             # the Python env, via uv
+```
+
+The frontend's `npm install` happens on the first `make dev`, so there is nothing else to run here.
+
+### 5. A model that actually fits
+
+```bash
+make models
+```
+
+It reads your card, then prints a ranked table with the arithmetic behind every verdict — weights,
+KV cache at each context length, compute buffers, and the ~700MB your browser's GPU process takes,
+because on an 8–12GB card the browser and the model share one card. Pick a row; it downloads,
+registers the file with its hash, and prints the exact `llama-server` command for what you chose.
+
+### 6. Serve it
+
+That command looks like this — `make models` prints the right one for your model and context:
+
+```bash
+llama-server --model models/<your-model>.gguf --ctx-size 16384     --host 127.0.0.1 --port 8081 --cache-type-k q8_0 --cache-type-v q8_0 -ngl 999
+```
+
+`--host 127.0.0.1` is not decoration: never expose an inference port off-box. The `q8_0` cache
+flags must match `hardware.kv_cache_dtype` in your config, or the VRAM preflight will be computing
+a different number from the one llama.cpp is using.
+
+### 7. Run it
+
+```bash
+make dev        # backend on 127.0.0.1:8080, frontend on 127.0.0.1:5173
+```
+
+Open <http://127.0.0.1:5173>. The status bar names the backend it found; if none is reachable it
+says so rather than failing on your first message.
+
+### Before downloading several gigabytes
+
+The development stand-in speaks llama.cpp's protocol and generates deterministic nonsense, which is
+enough to walk the whole interface — branching, the Context Inspector, the HUD, agents:
+
+```bash
+.venv/bin/python scripts/dev_stub_server.py --port 8081   # after `make install`
 make dev
 ```
 
-## What M1 actually does
+## Optional, and each one independent
+
+Nothing here is required, nothing turns itself on, and each one states in the UI whether it is
+actually working:
+
+| Want | Do this | Costs |
+|---|---|---|
+| Vector search alongside keyword | second `llama-server --embeddings` on `:8082` with `nomic-embed-text`, then set `knowledge.embeddings_base_url` | ~300MB VRAM |
+| Reranking ("right file, wrong paragraph") | third `llama-server --reranking` on `:8083` with a cross-encoder, then `knowledge.rerank_base_url` | ~600MB VRAM |
+| Private web search and research mode | `make searxng`, then `search.base_url = "http://127.0.0.1:8888"` | a background service |
+| Voice in and out | `make voice-install` then `make voice` | ~440MB VRAM for STT; TTS is CPU-only |
+| Scheduled agents | create a job in the Agents panel; give it a workspace only if it needs to write | approvals you have to answer |
+
+## When it does not work
+
+- **`nvidia-smi` prints nothing inside WSL.** The driver belongs on Windows. A Linux driver inside
+  the distro shadows the passthrough.
+- **The status bar says no backend reachable.** `curl 127.0.0.1:8081/health` — if that fails,
+  `llama-server` is not running or is on another port than `providers.llamacpp.base_url`.
+- **A message fails with a VRAM sentence and a button.** That is the preflight refusing to start a
+  request that will not fit. The button applies the fix it names; the numbers behind it are in the
+  model picker.
+- **Token counts say "estimated".** The backend exposes no tokenizer. The numbers are honest
+  approximations rather than exact, and they are labelled instead of looking precise.
+- **Indexing a folder is slow and the panel says "polling".** It is under `/mnt/c`. Move it to the
+  WSL side, or accept the polling.
+- **The app refuses to start, citing the bind.** `server.host` is not loopback and no `auth_token`
+  is set. That is the invariant working.
+
+## What it does
 
 - **Chat over SSE**, resumable. Every token is written to the database as it arrives, so a browser
   refresh mid-answer reattaches with `Last-Event-ID` and misses nothing. Closing the tab does not
