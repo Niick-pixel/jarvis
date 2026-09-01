@@ -2513,6 +2513,16 @@ export interface components {
              * @default true
              */
             keyword: boolean;
+            /**
+             * Rerank
+             * @default false
+             */
+            rerank: boolean;
+            /**
+             * Rerank Detail
+             * @default
+             */
+            rerank_detail: string;
             /** Vector */
             vector: boolean;
         };

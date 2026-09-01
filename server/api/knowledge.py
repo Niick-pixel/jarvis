@@ -14,6 +14,7 @@ from server.errors import NotFound, SovereignError
 from server.ids import new_id, now_ms
 from server.knowledge import retrieval, vectors, watcher
 from server.models.knowledge import IndexProgress, Source, SourceCreate
+from server.settings import Settings
 
 router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])
 CONTEXT_BYTES = 400
@@ -33,7 +34,10 @@ class OpenedChunk(BaseModel):
 class RetrievalStatus(BaseModel):
     keyword: bool = True
     vector: bool
+    rerank: bool = False
+    """True only when a reranker answered a probe just now, not when one is merely configured."""
     detail: str
+    rerank_detail: str = ""
 
 
 def _row(row: sqlite3.Row) -> Source:
@@ -113,21 +117,37 @@ def resume(state: State) -> dict[str, bool]:
 
 
 @router.get("/status")
-def status(state: State) -> RetrievalStatus:
+async def status(state: State) -> RetrievalStatus:
     """Which retrievers are actually running, so nothing quietly degrades."""
     has_embedder = retrieval.embedder_for(state.settings) is not None
     with state.db.session() as conn:
         built = vectors.available(conn)
+    rerank_ok, rerank_detail = await _rerank_status(state.settings)
     if has_embedder and built:
-        return RetrievalStatus(vector=True, detail="keyword and vector search, fused by RRF")
-    if has_embedder:
-        return RetrievalStatus(
-            vector=False, detail="embedding model configured, but nothing indexed yet"
-        )
+        detail = "keyword and vector search, fused by RRF"
+    elif has_embedder:
+        detail = "embedding model configured, but nothing indexed yet"
+    else:
+        detail = "keyword search only - set knowledge.embeddings_base_url to add vector search"
     return RetrievalStatus(
-        vector=False,
-        detail="keyword search only - set knowledge.embeddings_base_url to add vector search",
+        vector=has_embedder and built,
+        rerank=rerank_ok,
+        detail=detail,
+        rerank_detail=rerank_detail,
     )
+
+
+async def _rerank_status(settings: Settings) -> tuple[bool, str]:
+    """Probed, not assumed: a configured reranker that is not running is worth saying out loud."""
+    client = retrieval.reranker_for(settings)
+    if client is None:
+        configured = bool(settings.knowledge.rerank_base_url.strip())
+        return False, (
+            "rerank_base_url is not loopback, so it is ignored"
+            if configured
+            else "no reranker - fusion order is final"
+        )
+    return await client.reachable()
 
 
 @router.get("/open")

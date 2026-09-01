@@ -111,6 +111,21 @@ def shuffled_words(rng: random.Random) -> list[str]:
     return [w + " " for w in words]
 
 
+def overlap_score(query: str, document: str) -> float:
+    """A stand-in for a cross-encoder: how much of the question appears in the passage.
+
+    A real reranker reads the pair and judges meaning; this counts words. It is enough to prove
+    that scores come back, that the order actually changes, and that a failure degrades to fusion
+    order - and it is never enough to mistake for retrieval quality.
+    """
+    terms = {w for w in re.findall(r"\w+", query.lower()) if len(w) > 2}
+    if not terms:
+        return 0.0
+    words = re.findall(r"\w+", document.lower())
+    hits = sum(1 for w in set(words) if w in terms)
+    return round(hits / len(terms), 4)
+
+
 def fake_vector(text: str, dimension: int = 64) -> list[float]:
     seed = int(hashlib.blake2b(text.encode(), digest_size=8).hexdigest(), 16)
     rng = random.Random(seed)

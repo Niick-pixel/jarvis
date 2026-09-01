@@ -78,6 +78,14 @@ export default function SourcesPanel({ onClose }: { onClose: () => void }) {
             {status.vector ? "hybrid" : "keyword only"}
           </span>{" "}
           — {status.detail}
+          <br />
+          {/* Probed, not read off the config: a reranker that is configured but not running is
+              worth saying out loud, since the pipeline degrades to fusion order in silence. */}
+          <span className={status.rerank ? "text-emerald-300/80" : "text-ink-faint"}>
+            {status.rerank ? "reranked" : "no rerank"}
+          </span>{" "}
+          — {status.rerank_detail}
+          {status.rerank && " · a second model resident on the same card"}
         </p>
       )}
 

@@ -56,11 +56,21 @@ def rag(chunk: RetrievedChunk, tokens: int, ord: int) -> ContextBlock:
         id=new_id("blk"),
         ord=ord,
         kind="rag",
-        label=Path(chunk.document_path).name + (f" · {chunk.heading}" if chunk.heading else ""),
+        label=_rag_label(chunk),
         content=chunk.text,
         token_count=tokens,
         source_ref=f"{chunk.document_path}#{chunk.byte_start}-{chunk.byte_end}",
     )
+
+
+def _rag_label(chunk: RetrievedChunk) -> str:
+    """The score is part of the label because "why is this here" should not need a second click."""
+    parts = [Path(chunk.document_path).name]
+    if chunk.heading:
+        parts.append(chunk.heading)
+    if chunk.rerank_score is not None:
+        parts.append(f"rerank {chunk.rerank_score:.2f}")
+    return " · ".join(parts)
 
 
 def web(result: SearchResult, tokens: int, ord: int) -> ContextBlock:

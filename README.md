@@ -84,7 +84,12 @@ make dev
   can be paused, and yields automatically while the model is generating — on a small card an
   embedding pass and a generation competing for the same VRAM is how you get an OOM mid-answer.
   Folders on Windows drives are polled rather than watched, because `/mnt/c` delivers no inotify
-  events to WSL2, and the UI says which one is in use.
+  events to WSL2, and the UI says which one is in use. Point `knowledge.rerank_base_url` at a
+  second llama.cpp started with `--reranking` and a cross-encoder rescores the fused candidates by
+  reading your question and each passage together — the score lands in the block's label, so you
+  can see why a chunk was chosen, and a chunk with no score is visibly one that was never scored.
+  It is another model on the same card, which the panel says out loud; if it is not running, the
+  fused order stands and the panel says that instead.
 - **Private web search.** `make searxng` installs SearXNG natively — no Docker — bound to loopback.
   Research mode plans several queries, searches, notices what the snippets did not answer, and
   searches again, then injects what it found as citable blocks carrying their URLs. Only snippets

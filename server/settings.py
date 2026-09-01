@@ -90,6 +90,16 @@ class KnowledgeConfig(BaseModel):
     embeddings_model_id: str = "nomic-embed-text"
     rag_results: int = 4
     """How many chunks to inject. Each one costs context you can see in the inspector."""
+    rerank_base_url: str = ""
+    """A loopback llama.cpp server started with `--reranking`. Empty means fusion order is final.
+    A cross-encoder is another model on the same card: bge-reranker-v2-m3 at Q8 is about 600MB of
+    VRAM, which `make models` counts against your budget like any other."""
+    rerank_model_id: str = "bge-reranker-v2-m3"
+    rerank_candidates: int = 20
+    """How many fused hits the reranker reads before the top `rag_results` are kept. Larger finds
+    more, and costs a cross-encoder pass per candidate on the turn you are waiting for."""
+    rerank_timeout_s: float = 20.0
+    """A reranker that hangs must not hang the answer: past this, fusion order stands."""
 
 
 class SearchConfig(BaseModel):

@@ -50,3 +50,6 @@ class RetrievedChunk(BaseModel):
     score: float
     matched_by: list[str] = []
     """Which retrievers found it - 'keyword', 'vector', or both. Fusion is not a black box."""
+    rerank_score: float | None = None
+    """The cross-encoder's score for this chunk against this question. None when reranking is off
+    or unreachable, which is the difference between "scored badly" and "never scored"."""

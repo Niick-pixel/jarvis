@@ -620,7 +620,8 @@ library (the HUD and the agreement heatmap are small bespoke SVG), and no React 
 `vitest` is here for one pure function, not to start testing components rule 0.7 says not to test.
 
 **Separate processes, not imports:** `llama.cpp` (MIT, built from source in WSL2 with
-`-DGGML_CUDA=ON`) and `SearXNG` (AGPL-3.0, M4, its own venv). Neither is linked into our code, so the
+`-DGGML_CUDA=ON`; a second instance with `--reranking` and a cross-encoder GGUF is what the
+reranker is — no Python dependency was added for it) and `SearXNG` (AGPL-3.0, M4, its own venv). Neither is linked into our code, so the
 AGPL stays contained to the service; both bind loopback only.
 
 **Telemetry audit (rule 0.11):** at M1 I verify and pin the no-phone-home posture —
@@ -948,6 +949,29 @@ model in the app - the single definition of every shape the frontend generates i
 been absent from the repository since M1, and `ruff` had never linted those files either, because
 it honours `.gitignore` when it walks a directory. Both are fixed and the pre-existing lint errors
 that had been hiding there are cleared.
+
+
+### The reranker, added after M6
+
+Deferred through M4 and built once everything it sits between was real.
+
+1. **It is a second llama.cpp on loopback, not a library.** A cross-encoder is a model, and this
+   project already knows how to talk to a model over a port. No Python dependency was added, so
+   rule 0.4 never came up; the cost is a process you start and roughly 600MB of VRAM for
+   `bge-reranker-v2-m3` at Q8, which is stated where you configure it because it competes with the
+   model generating the answer.
+2. **Fusion decides what is worth reading; the reranker decides what is worth injecting.** RRF
+   fuses two rankings that never saw each other's results. A cross-encoder is the first thing in
+   the pipeline that reads the question and the passage together, which is what fixes the "right
+   file, wrong paragraph" case fusion cannot. Twenty candidates in, four blocks out.
+3. **The score is in the block label**, so the Context Inspector answers "why is this here" without
+   a second click - and a chunk with no score is visibly one that was never scored, which is how a
+   reranker that is off, misconfigured or unreachable looks different from one that scored badly.
+4. **The status endpoint probes it rather than reading the setting.** A configured reranker that
+   is not running degrades to fusion order in silence, so "reranked" in the Knowledge panel means
+   something answered a probe just now.
+5. **A reranker that fails or hangs never fails the answer.** Past `rerank_timeout_s`, fusion order
+   stands and the turn proceeds.
 
 
 ---
