@@ -46,9 +46,21 @@ class PathsConfig(BaseModel):
 class LlamaCppConfig(BaseModel):
     enabled: bool = True
     base_url: str = "http://127.0.0.1:8081"
-    # There is deliberately no `autostart` here. It was declared through M1-M6 and never
-    # implemented, which made config.toml.example promise something that did not happen. You start
-    # llama-server yourself; `make models` prints the exact command for the model you picked.
+    autostart: bool = False
+    """Start llama-server with the app. Off by default: starting processes on someone's machine is
+    something to opt into. A server already listening on `base_url` is never restarted."""
+    binary: str = "llama-server"
+    """Resolved on PATH unless it is an absolute path."""
+    model_path: str = ""
+    """Empty means the largest registered model this card can actually hold."""
+    ctx_len: int = 0
+    """0 means the largest context that fits with room to breathe, by the same arithmetic the
+    picker uses - so autostart cannot serve something the app would then call too big."""
+    extra_args: list[str] = []
+    """Appended verbatim, so any flag this project does not know about is still reachable."""
+    startup_timeout_s: float = 180.0
+    """Loading a 5GB model onto a cold card is slow. Past this, the process is killed and the
+    tail of its own log is what you are shown."""
 
 
 class HttpProviderConfig(BaseModel):

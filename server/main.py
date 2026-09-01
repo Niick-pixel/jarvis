@@ -41,6 +41,7 @@ from server.errors import SovereignError, handle_sovereign_error
 from server.knowledge import retrieval
 from server.knowledge.indexer import Indexer
 from server.knowledge.watcher import Watcher
+from server.providers.launcher import LlamaServer
 from server.providers.registry import ProviderRegistry
 from server.settings import Settings, load_settings
 
@@ -79,6 +80,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         indexer=indexer,
         watcher=Watcher(reindex),
         approvals=approvals,
+        llama=LlamaServer(settings, db),
     )
 
     @asynccontextmanager
@@ -91,10 +93,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 repo.agents.set_status(conn, stale, "failed", error="the server restarted")
         state.scheduler = JobScheduler(agent_loop.Runtime(db, registry, settings, live, approvals))
         state.scheduler.start()
+        # Loading a model takes tens of seconds, and the app must not be unreachable for them: the
+        # launcher runs in the background and the provider list reports what it is doing.
+        assert state.llama is not None
+        launching = asyncio.create_task(state.llama.start())
         try:
             yield
         finally:
             state.scheduler.shutdown()
+            launching.cancel()
+            await state.llama.stop()
 
     app = FastAPI(
         title="Jarvis",

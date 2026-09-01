@@ -10,7 +10,7 @@ API_PORT ?= 8080
 .PHONY: help dev check models bench types install web-install voice voice-install searxng clean
 
 help:
-	@echo "make dev      start the backend and the frontend on 127.0.0.1"
+	@echo "make dev      start llama-server (if autostart), the backend and the frontend"
 	@echo "make check    lint, types, tests, schema drift, file length, contrast, no-phone-home"
 	@echo "make models   rank what fits your card, download it, register it"
 	@echo "make bench    measure model tok/s and the background's GPU cost against the 3% budget"

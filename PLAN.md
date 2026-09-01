@@ -974,6 +974,30 @@ Deferred through M4 and built once everything it sits between was real.
    stands and the turn proceeds.
 
 
+### `make dev` starting llama.cpp, added after M6
+
+Section 8.3 has claimed since M1 that `make dev` starts llama.cpp when configured, and
+`config.toml.example` documented an `autostart` flag. Neither was ever implemented. Writing the
+fresh-machine quickstart is what surfaced it: the setting was deleted as a placeholder, and then
+built.
+
+1. **In the server, not the Makefile.** A shell line can spawn a process; it cannot wait for the
+   model to finish loading, report the server's own error when it does not, or decline to start a
+   second copy over the one you are already running. All three matter more than the spawn does.
+2. **It never touches a server you started.** If `base_url` answers `/health`, the launcher says so
+   and leaves it alone - including at shutdown, where only a process this app started is killed.
+3. **The model and the context length come from the same arithmetic the picker uses,** so autostart
+   cannot serve something the app would then refuse as too big. Choosing them is also the first
+   code to read the `models` table `make models` has been writing since M1.
+4. **Failure is the server's own words.** stdout and stderr go to `data/llama-server.log`, and a
+   crash or a timeout reports the tail of *this run's* section of it - not the previous run's,
+   which is a distinction that cost a debugging round to notice.
+5. **It starts in the background.** Loading a 5GB model takes tens of seconds and the app must be
+   usable during them; the provider list reports "starting llama-server and loading the model"
+   until it is serving, and the reason instead if it never does.
+6. **Off by default.** Starting processes on someone's machine is something to opt into.
+
+
 ---
 
 ## 8. Tests, checks, and the Makefile
@@ -1003,7 +1027,7 @@ model, no GPU, so `make check` is fast and runs in CI on this repo's existing ru
 ### 8.3 Makefile
 
 ```
-make dev      # migrate → start llama.cpp (if configured) → uvicorn on 127.0.0.1:8080 → vite
+make dev      # migrate → uvicorn on 127.0.0.1:8080 (which starts llama.cpp if autostart) → vite
 make check    # ruff, mypy, pytest, vitest, type-drift, file-length, contrast, no-phone-home
 make models   # probe VRAM → ranked shortlist with real sizes → download → bench → register
 make bench    # measure background+glow GPU cost against the 3% cap (§5.6); prints pass/fail

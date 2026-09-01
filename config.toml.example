@@ -12,9 +12,17 @@ memory_dir = "./memory"     # your memory, as Markdown in a git repo you can rea
 vault_dir = "./vault"       # exported conversations land here; point it at an Obsidian vault
 
 [providers.llamacpp]
-# You start llama-server yourself; `make models` prints the exact command for the model you pick.
 enabled = true
 base_url = "http://127.0.0.1:8081"
+# With autostart, `make dev` starts llama-server and stops it again when you stop the app. It waits
+# for the model to finish loading before calling it started, reports llama-server's own words when
+# it does not, and never touches a server that is already listening on base_url.
+autostart = false
+binary = "llama-server"     # resolved on PATH unless this is an absolute path
+model_path = ""             # empty = the largest registered model this card can actually hold
+ctx_len = 0                 # 0 = the largest context that fits, by the same arithmetic the picker uses
+extra_args = []             # appended verbatim, so any flag this project does not know is reachable
+startup_timeout_s = 180.0   # past this it is killed and the tail of its own log is what you see
 
 [providers.ollama]
 enabled = true

@@ -7,6 +7,7 @@ from server.db import repo
 from server.deps import State
 from server.hardware import probe, selection
 from server.models.hardware import ModelOption
+from server.models.launch import LaunchStatus
 from server.models.provider import ModelInfo, ProviderInfo
 
 router = APIRouter(prefix="/api", tags=["models"])
@@ -14,7 +15,29 @@ router = APIRouter(prefix="/api", tags=["models"])
 
 @router.get("/providers")
 async def list_providers(state: State) -> list[ProviderInfo]:
-    return await state.registry.infos()
+    """Offline llama.cpp reports the launcher's reason, which is the useful one when we started it.
+
+    Without this the UI shows a connection error for a backend that never got as far as a port -
+    "connection refused" instead of "llama-server is not on PATH".
+    """
+    infos = await state.registry.infos()
+    launch = state.llama.status if state.llama else None
+    if launch is None or not launch.detail:
+        return infos
+    return [
+        info.model_copy(
+            update={"detail": f"{launch.detail} ({info.detail})" if info.detail else launch.detail}
+        )
+        if info.kind == "llamacpp" and not info.online
+        else info
+        for info in infos
+    ]
+
+
+@router.get("/providers/launch")
+def launch_status(state: State) -> LaunchStatus:
+    """What autostart did, the exact argv it used, and where its log is."""
+    return state.llama.status if state.llama else LaunchStatus(autostart=False, started=False)
 
 
 @router.get("/models")

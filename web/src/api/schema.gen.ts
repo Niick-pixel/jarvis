@@ -907,8 +907,34 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Providers */
+        /**
+         * List Providers
+         * @description Offline llama.cpp reports the launcher's reason, which is the useful one when we started it.
+         *
+         *     Without this the UI shows a connection error for a backend that never got as far as a port -
+         *     "connection refused" instead of "llama-server is not on PATH".
+         */
         get: operations["list_providers_api_providers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/providers/launch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Launch Status
+         * @description What autostart did, the exact argv it used, and where its log is.
+         */
+        get: operations["launch_status_api_providers_launch_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1957,6 +1983,40 @@ export interface components {
              * @default
              */
             summary: string;
+        };
+        /** LaunchStatus */
+        LaunchStatus: {
+            /** Autostart */
+            autostart: boolean;
+            /**
+             * Command
+             * @default []
+             */
+            command: string[];
+            /**
+             * Ctx Len
+             * @default 0
+             */
+            ctx_len: number;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /**
+             * Log Path
+             * @default
+             */
+            log_path: string;
+            /**
+             * Model Path
+             * @default
+             */
+            model_path: string;
+            /** Pid */
+            pid?: number | null;
+            /** Started */
+            started: boolean;
         };
         /** LifetimeCounters */
         LifetimeCounters: {
@@ -4631,6 +4691,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProviderInfo"][];
+                };
+            };
+        };
+    };
+    launch_status_api_providers_launch_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LaunchStatus"];
                 };
             };
         };

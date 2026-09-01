@@ -97,6 +97,12 @@ llama-server --model models/<your-model>.gguf --ctx-size 16384     --host 127.0.
 flags must match `hardware.kv_cache_dtype` in your config, or the VRAM preflight will be computing
 a different number from the one llama.cpp is using.
 
+Or hand it to the app. Set `autostart = true` under `[providers.llamacpp]` and `make dev` starts
+llama-server, waits for the model to finish loading before saying it started, and stops it again
+when you stop the app. It picks the model and the context length with the same arithmetic the
+picker uses, leaves a server you started yourself alone, and when it cannot start one it shows you
+llama-server's own error rather than a connection refusal. Its output is in `data/llama-server.log`.
+
 ### 7. Run it
 
 ```bash
@@ -134,7 +140,8 @@ actually working:
 - **`nvidia-smi` prints nothing inside WSL.** The driver belongs on Windows. A Linux driver inside
   the distro shadows the passthrough.
 - **The status bar says no backend reachable.** `curl 127.0.0.1:8081/health` — if that fails,
-  `llama-server` is not running or is on another port than `providers.llamacpp.base_url`.
+  `llama-server` is not running or is on another port than `providers.llamacpp.base_url`. With
+  autostart on, hover the badge: the reason there is llama-server's, not a connection error.
 - **A message fails with a VRAM sentence and a button.** That is the preflight refusing to start a
   request that will not fit. The button applies the fix it names; the numbers behind it are in the
   model picker.
